@@ -19,7 +19,6 @@ class QuizBookRepository {
       }
       
       const parsed = JSON.parse(stored);
-      // ★ parsed は配列なので、map で各要素を deserialize
       return parsed.map((book: any) => this.deserialize(book));
     } catch (error) {
       console.error('Failed to load quiz books:', error);
@@ -116,10 +115,8 @@ class QuizBookRepository {
   
   /**
    * 全ての問題集を保存
-   * ★ 引数は配列、戻り値はvoid
    */
   private async saveAll(books: QuizBook[]): Promise<void> {
-    // ★ 配列の各要素をserialize
     const serialized = books.map(book => this.serialize(book));
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
   }
@@ -132,6 +129,28 @@ class QuizBookRepository {
       ...book,
       createdAt: book.createdAt.toISOString(),
       updatedAt: book.updatedAt.toISOString(),
+      chapters: book.chapters.map(chapter => ({
+        ...chapter,
+        // チャプター直下の questionAnswers をシリアライズ
+        questionAnswers: chapter.questionAnswers?.map(qa => ({
+          ...qa,
+          attempts: qa.attempts.map(att => ({
+            ...att,
+            answeredAt: att.answeredAt.toISOString(), // ★ Date → string
+          })),
+        })),
+        // セクション配下の questionAnswers をシリアライズ
+        sections: chapter.sections?.map(section => ({
+          ...section,
+          questionAnswers: section.questionAnswers?.map(qa => ({
+            ...qa,
+            attempts: qa.attempts.map(att => ({
+              ...att,
+              answeredAt: att.answeredAt.toISOString(), // ★ Date → string
+            })),
+          })),
+        })),
+      })),
     };
   }
   
@@ -143,6 +162,28 @@ class QuizBookRepository {
       ...data,
       createdAt: new Date(data.createdAt),
       updatedAt: new Date(data.updatedAt),
+      chapters: data.chapters?.map((chapter: any) => ({
+        ...chapter,
+        // チャプター直下の questionAnswers をデシリアライズ
+        questionAnswers: chapter.questionAnswers?.map((qa: any) => ({
+          ...qa,
+          attempts: qa.attempts?.map((att: any) => ({
+            ...att,
+            answeredAt: new Date(att.answeredAt), // ★ string → Date
+          })),
+        })),
+        // セクション配下の questionAnswers をデシリアライズ
+        sections: chapter.sections?.map((section: any) => ({
+          ...section,
+          questionAnswers: section.questionAnswers?.map((qa: any) => ({
+            ...qa,
+            attempts: qa.attempts?.map((att: any) => ({
+              ...att,
+              answeredAt: new Date(att.answeredAt), // ★ string → Date
+            })),
+          })),
+        })),
+      })),
     };
   }
 }

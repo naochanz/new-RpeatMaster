@@ -5,22 +5,27 @@ import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
+
 const signupSchema = z.object({
-    email: z.string({
-        required_error: 'メールアドレスは必須です'
-    }).email('正しいメールアドレスを入力してください'),
-    password: z.string({
-        required_error: 'パスワードは必須です'
-    }).min(8, 'パスワードは8文字以上で入力してください'),
+    email: z
+        .string()
+        .min(1, "メールアドレスは必須です")
+        .email("正しいメールアドレスを入力してください"),
+
+    password: z
+        .string()
+        .min(1, "パスワードは必須です")
+        .min(8, "パスワードは8文字以上で入力してください"),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
+
 const login = () => {
 
     const {
-        control, //reactだとregisterで入力値参照
+        control,
         handleSubmit,
-        formState: { errors, isSubmitting }
+        formState: { errors }
     } = useForm<SignupFormData>({
         resolver: zodResolver(signupSchema)
     });
@@ -30,17 +35,20 @@ const login = () => {
         router.replace('/(tabs)');
     };
 
-
     return (
         <>
             <View>
                 <AppName />
             </View>
+
             <View style={styles.container}>
                 <View style={styles.loginContainer}>
                     <Text style={styles.loginContainerText}>ログイン情報を入力してください</Text>
                 </View>
+
                 <View style={styles.formContainer}>
+
+                    {/* Email */}
                     <View style={styles.mailContainer}>
                         <Controller
                             control={control}
@@ -48,43 +56,49 @@ const login = () => {
                             render={({ field: { onChange, value } }) => (
                                 <View>
                                     <Text style={styles.mailText}>メールアドレス：</Text>
-                                    <TextInput value={value} onChangeText={onChange} placeholder='example@e-mail.com' style={styles.email} placeholderTextColor="rgba(100, 100, 100, 0.7)" />
-                                    {errors.email && <Text style={styles.error}>{errors.email.message}</Text>
-                                    }
+                                    <TextInput
+                                        value={value}
+                                        onChangeText={onChange}
+                                        placeholder='example@e-mail.com'
+                                        style={styles.email}
+                                        placeholderTextColor="rgba(100, 100, 100, 0.7)"
+                                    />
+                                    {errors.email && <Text style={styles.error}>{errors.email.message}</Text>}
                                 </View>
                             )}
                         />
                     </View>
+
+                    {/* Password */}
                     <Controller
                         control={control}
                         name='password'
                         render={({ field: { onChange, value } }) => (
                             <View style={styles.passContainer}>
                                 <Text style={styles.passText}>パスワード：</Text>
-                                <TextInput value={value}
+                                <TextInput
+                                    value={value}
                                     onChangeText={onChange}
                                     placeholder='パスワードを入力してください'
                                     style={styles.password}
                                     secureTextEntry={true}
                                     placeholderTextColor="rgba(100, 100, 100, 0.7)"
                                 />
-                                {errors.password && <Text style={styles.error}>{errors.password.message}</Text>
-                                }
+                                {errors.password && <Text style={styles.error}>{errors.password.message}</Text>}
                             </View>
                         )}
-
                     />
-                    <TouchableOpacity style={styles.loginButton}>
-                        <Text style={styles.buttonText} onPress={handleSubmit(onSubmit)}>ログイン</Text>
+
+                    <TouchableOpacity style={styles.loginButton} onPress={handleSubmit(onSubmit)}>
+                        <Text style={styles.buttonText}>ログイン</Text>
                     </TouchableOpacity>
+
                     <TouchableOpacity style={styles.signupButton} onPress={() => router.replace('/signup')}>
                         <Text style={styles.buttonText}>新規登録</Text>
                     </TouchableOpacity>
-                    <View>
-                    </View>
+
                 </View>
             </View>
-
         </>
     );
 };
@@ -104,7 +118,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     loginContainerText: {
-        //fontWeight: 'bold',
         fontSize: 20,
         color: 'white',
     },
@@ -114,7 +127,6 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     mailContainer: {
-        //marginTop: 10,
         marginBottom: 10,
     },
     mailText: {
@@ -123,8 +135,6 @@ const styles = StyleSheet.create({
     },
     email: {
         padding: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
         borderWidth: 1,
         borderRadius: 5,
         borderColor: 'black',
@@ -141,15 +151,12 @@ const styles = StyleSheet.create({
     },
     password: {
         padding: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
         borderWidth: 1,
         borderRadius: 5,
         borderColor: 'black',
         width: '100%',
         backgroundColor: 'white'
     },
-
     loginButton: {
         padding: 10,
         justifyContent: 'center',
@@ -179,4 +186,5 @@ const styles = StyleSheet.create({
         color: 'red'
     },
 });
-export default login
+
+export default login;

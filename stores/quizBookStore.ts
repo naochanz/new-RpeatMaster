@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { quizBookRepository } from '@/app/repositories/QuizBookRepository';
 import { QuizBook, Chapter, Section, QuestionAnswer } from '@/types/QuizBook';
 
-
-
 interface QuizBookStore {
   // 状態
   currentQuizBook: Partial<QuizBook> | null;
@@ -80,11 +78,14 @@ export const useQuizBookStore = create<QuizBookStore>((set, get) => ({
     set({ isLoading: true });
     try {
       await quizBookRepository.create(quizBook);
-      set((state) => ({
-        quizBooks: [...state.quizBooks, quizBook],
+      
+      // ✅ 保存後、全データを再取得
+      const allBooks = await quizBookRepository.getAll();
+      set({ 
+        quizBooks: allBooks,
         currentQuizBook: null,
-        isLoading: false
-      }));
+        isLoading: false 
+      });
     } catch (error) {
       console.error('Failed to add quiz book:', error);
       set({ isLoading: false });
@@ -95,10 +96,13 @@ export const useQuizBookStore = create<QuizBookStore>((set, get) => ({
     set({ isLoading: true });
     try {
       await quizBookRepository.delete(id);
-      set((state) => ({
-        quizBooks: state.quizBooks.filter(book => book.id !== id),
-        isLoading: false
-      }));
+      
+      // ✅ 削除後、全データを再取得
+      const allBooks = await quizBookRepository.getAll();
+      set({ 
+        quizBooks: allBooks,
+        isLoading: false 
+      });
     } catch (error) {
       console.error('Failed to delete quiz book:', error);
       set({ isLoading: false });
@@ -108,20 +112,20 @@ export const useQuizBookStore = create<QuizBookStore>((set, get) => ({
   updateQuizBook: async (id: string, updates: Partial<QuizBook>) => {
     set({ isLoading: true });
     try {
-      const updated = await quizBookRepository.update(id, { ...updates, updatedAt: new Date() });
-      if (updated) {
-        set((state) => ({
-          quizBooks: state.quizBooks.map(book => book.id === id ? updated : book),
-          isLoading: false
-        }));
-      } else {
-        set({ isLoading: false });
-      }
+      await quizBookRepository.update(id, { ...updates, updatedAt: new Date() });
+      
+      // ✅ 更新後、全データを再取得
+      const allBooks = await quizBookRepository.getAll();
+      set({ 
+        quizBooks: allBooks,
+        isLoading: false 
+      });
     } catch (error) {
       console.error('Failed to update quiz book:', error);
       set({ isLoading: false });
     }
   },
+
   // ========== 検索系メソッド ==========
   getQuizBookById: (id) => {
     return get().quizBooks.find(book => book.id === id);
@@ -441,271 +445,265 @@ export const useQuizBookStore = create<QuizBookStore>((set, get) => ({
     }
   },
 
+  // ========== 章の追加・削除・更新（修正版）==========
+  
   addChapterToQuizBook: async (quizBookId: string, chapterTitle: string) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      if (book.id !== quizBookId) return book;
+    const book = get().quizBooks.find(b => b.id === quizBookId);
+    if (!book) return;
 
-      const newChapterNumber = book.chapters.length + 1;
-      const newChapter: Chapter = {
-        id: `chapter-${Date.now()}`,
-        title: chapterTitle || ``,
-        chapterNumber: newChapterNumber,
-        chapterRate: 0,
-        questionCount: 0,
-        questionAnswers: []
-      };
+    const newChapterNumber = book.chapters.length + 1;
+    const newChapter: Chapter = {
+      id: `chapter-${Date.now()}`,
+      title: chapterTitle || ``,
+      chapterNumber: newChapterNumber,
+      chapterRate: 0,
+      questionCount: 0,
+      questionAnswers: []
+    };
 
-      return {
-        ...book,
-        chapters: [...book.chapters, newChapter],
-        chapterCount: book.chapterCount + 1,
-        updatedAt: new Date()
-      };
-    });
+    const updatedBook = {
+      ...book,
+      chapters: [...book.chapters, newChapter],
+      chapterCount: book.chapterCount + 1,
+      updatedAt: new Date()
+    };
 
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(b => b.id === quizBookId);
-    if (targetBook) {
-      await quizBookRepository.update(quizBookId, targetBook);
-    }
+    await quizBookRepository.update(quizBookId, updatedBook);
+    
+    // ✅ 保存後、全データを再取得して確実に反映
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 
   deleteChapterFromQuizBook: async (quizBookId: string, chapterId: string) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      if (book.id !== quizBookId) return book;
+    const book = get().quizBooks.find(b => b.id === quizBookId);
+    if (!book) return;
 
-      const filteredChapters = book.chapters.filter(ch => ch.id !== chapterId);
-      const reorderedChapters = filteredChapters.map((ch, index) => ({
-        ...ch,
-        chapterNumber: index + 1
-      }));
+    const filteredChapters = book.chapters.filter(ch => ch.id !== chapterId);
+    const reorderedChapters = filteredChapters.map((ch, index) => ({
+      ...ch,
+      chapterNumber: index + 1
+    }));
 
-      return {
-        ...book,
-        chapters: reorderedChapters,
-        chapterCount: reorderedChapters.length,
-        updatedAt: new Date()
-      };
-    });
+    const updatedBook = {
+      ...book,
+      chapters: reorderedChapters,
+      chapterCount: reorderedChapters.length,
+      updatedAt: new Date()
+    };
 
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(b => b.id === quizBookId);
-    if (targetBook) {
-      await quizBookRepository.update(quizBookId, targetBook);
-    }
+    await quizBookRepository.update(quizBookId, updatedBook);
+    
+    // ✅ 保存後、全データを再取得
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 
   updateChapterInQuizBook: async (quizBookId: string, chapterId: string, updates: Partial<Chapter>) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      if (book.id !== quizBookId) return book;
+    const book = get().quizBooks.find(b => b.id === quizBookId);
+    if (!book) return;
 
-      return {
-        ...book,
-        chapters: book.chapters.map(ch =>
-          ch.id === chapterId ? { ...ch, ...updates } : ch
-        ),
-        updatedAt: new Date()
-      };
-    });
+    const updatedBook = {
+      ...book,
+      chapters: book.chapters.map(ch =>
+        ch.id === chapterId ? { ...ch, ...updates } : ch
+      ),
+      updatedAt: new Date()
+    };
 
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(b => b.id === quizBookId);
-    if (targetBook) {
-      await quizBookRepository.update(quizBookId, targetBook);
-    }
+    await quizBookRepository.update(quizBookId, updatedBook);
+    
+    // ✅ 保存後、全データを再取得
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 
+  // ========== 節の追加・削除・更新（修正版）==========
+  
   addSectionToChapter: async (quizBookId: string, chapterId: string, sectionTitle: string) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      if (book.id !== quizBookId) return book;
+    const book = get().quizBooks.find(b => b.id === quizBookId);
+    if (!book) return;
 
-      return {
-        ...book,
-        chapters: book.chapters.map(ch => {
-          if (ch.id !== chapterId) return ch;
+    const updatedBook = {
+      ...book,
+      chapters: book.chapters.map(ch => {
+        if (ch.id !== chapterId) return ch;
 
-          const sections = ch.sections || [];
-          const newSectionNumber = sections.length + 1;
-          const newSection: Section = {
-            id: `section-${Date.now()}`,
-            title: sectionTitle,
-            sectionNumber: newSectionNumber,
-            questionCount: 0,
-            questionAnswers: []
-          };
+        const sections = ch.sections || [];
+        const newSectionNumber = sections.length + 1;
+        const newSection: Section = {
+          id: `section-${Date.now()}`,
+          title: sectionTitle,
+          sectionNumber: newSectionNumber,
+          questionCount: 0,
+          questionAnswers: []
+        };
 
-          return {
-            ...ch,
-            sections: [...sections, newSection]
-          };
-        }),
-        updatedAt: new Date()
-      };
-    });
+        return {
+          ...ch,
+          sections: [...sections, newSection]
+        };
+      }),
+      updatedAt: new Date()
+    };
 
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(b => b.id === quizBookId);
-    if (targetBook) {
-      await quizBookRepository.update(quizBookId, targetBook);
-    }
+    await quizBookRepository.update(quizBookId, updatedBook);
+    
+    // ✅ 保存後、全データを再取得
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 
   deleteSectionFromChapter: async (quizBookId: string, chapterId: string, sectionId: string) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      if (book.id !== quizBookId) return book;
+    const book = get().quizBooks.find(b => b.id === quizBookId);
+    if (!book) return;
 
-      return {
-        ...book,
-        chapters: book.chapters.map(ch => {
-          if (ch.id !== chapterId) return ch;
+    const updatedBook = {
+      ...book,
+      chapters: book.chapters.map(ch => {
+        if (ch.id !== chapterId) return ch;
 
-          const filteredSections = (ch.sections || []).filter(sec => sec.id !== sectionId);
-          const reorderedSections = filteredSections.map((sec, index) => ({
-            ...sec,
-            sectionNumber: index + 1
-          }));
+        const filteredSections = (ch.sections || []).filter(sec => sec.id !== sectionId);
+        const reorderedSections = filteredSections.map((sec, index) => ({
+          ...sec,
+          sectionNumber: index + 1
+        }));
 
-          return {
-            ...ch,
-            sections: reorderedSections
-          };
-        }),
-        updatedAt: new Date()
-      };
-    });
+        return {
+          ...ch,
+          sections: reorderedSections
+        };
+      }),
+      updatedAt: new Date()
+    };
 
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(b => b.id === quizBookId);
-    if (targetBook) {
-      await quizBookRepository.update(quizBookId, targetBook);
-    }
+    await quizBookRepository.update(quizBookId, updatedBook);
+    
+    // ✅ 保存後、全データを再取得
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 
   updateSectionInChapter: async (quizBookId: string, chapterId: string, sectionId: string, updates: Partial<Section>) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      if (book.id !== quizBookId) return book;
+    const book = get().quizBooks.find(b => b.id === quizBookId);
+    if (!book) return;
 
-      return {
-        ...book,
-        chapters: book.chapters.map(ch => {
-          if (ch.id !== chapterId) return ch;
+    const updatedBook = {
+      ...book,
+      chapters: book.chapters.map(ch => {
+        if (ch.id !== chapterId) return ch;
 
-          return {
-            ...ch,
-            sections: (ch.sections || []).map(sec =>
-              sec.id === sectionId ? { ...sec, ...updates } : sec
-            )
-          };
-        }),
-        updatedAt: new Date()
-      };
-    });
+        return {
+          ...ch,
+          sections: (ch.sections || []).map(sec =>
+            sec.id === sectionId ? { ...sec, ...updates } : sec
+          )
+        };
+      }),
+      updatedAt: new Date()
+    };
 
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(b => b.id === quizBookId);
-    if (targetBook) {
-      await quizBookRepository.update(quizBookId, targetBook);
-    }
+    await quizBookRepository.update(quizBookId, updatedBook);
+    
+    // ✅ 保存後、全データを再取得
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 
+  // ========== 問題の追加・削除（修正版）==========
+  
   addQuestionToTarget: async (chapterId: string, sectionId: string | null) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      return {
-        ...book,
-        chapters: book.chapters.map(chapter => {
-          if (chapter.id !== chapterId) return chapter;
-
-          if (sectionId) {
-            return {
-              ...chapter,
-              sections: (chapter.sections || []).map(section => {
-                if (section.id !== sectionId) return section;
-                return {
-                  ...section,
-                  questionCount: section.questionCount + 1
-                };
-              })
-            };
-          } else {
-            return {
-              ...chapter,
-              questionCount: (chapter.questionCount || 0) + 1
-            };
-          }
-        }),
-        updatedAt: new Date()
-      };
-    });
-
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(book =>
+    const targetBook = get().quizBooks.find(book =>
       book.chapters.some(ch => ch.id === chapterId)
     );
-    if (targetBook) {
-      await quizBookRepository.update(targetBook.id, targetBook);
-    }
+    if (!targetBook) return;
+
+    const updatedBook = {
+      ...targetBook,
+      chapters: targetBook.chapters.map(chapter => {
+        if (chapter.id !== chapterId) return chapter;
+
+        if (sectionId) {
+          return {
+            ...chapter,
+            sections: (chapter.sections || []).map(section => {
+              if (section.id !== sectionId) return section;
+              return {
+                ...section,
+                questionCount: section.questionCount + 1
+              };
+            })
+          };
+        } else {
+          return {
+            ...chapter,
+            questionCount: (chapter.questionCount || 0) + 1
+          };
+        }
+      }),
+      updatedAt: new Date()
+    };
+
+    await quizBookRepository.update(targetBook.id, updatedBook);
+    
+    // ✅ 保存後、全データを再取得
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 
   deleteQuestionFromTarget: async (chapterId: string, sectionId: string | null, questionNumber: number) => {
-    const updatedQuizBooks = get().quizBooks.map(book => {
-      return {
-        ...book,
-        chapters: book.chapters.map(chapter => {
-          if (chapter.id !== chapterId) return chapter;
-
-          if (sectionId) {
-            return {
-              ...chapter,
-              sections: (chapter.sections || []).map(section => {
-                if (section.id !== sectionId) return section;
-
-                const updatedAnswers = (section.questionAnswers || [])
-                  .filter(qa => qa.questionNumber !== questionNumber)
-                  .map((qa, index) => ({
-                    ...qa,
-                    questionNumber: index + 1
-                  }));
-
-                return {
-                  ...section,
-                  questionCount: Math.max(0, section.questionCount - 1),
-                  questionAnswers: updatedAnswers
-                };
-              })
-            };
-          } else {
-            const updatedAnswers = (chapter.questionAnswers || [])
-              .filter(qa => qa.questionNumber !== questionNumber)
-              .map((qa, index) => ({
-                ...qa,
-                questionNumber: index + 1
-              }));
-
-            return {
-              ...chapter,
-              questionCount: Math.max(0, (chapter.questionCount || 0) - 1),
-              questionAnswers: updatedAnswers
-            };
-          }
-        }),
-        updatedAt: new Date()
-      };
-    });
-
-    set({ quizBooks: updatedQuizBooks });
-
-    const targetBook = updatedQuizBooks.find(book =>
+    const targetBook = get().quizBooks.find(book =>
       book.chapters.some(ch => ch.id === chapterId)
     );
-    if (targetBook) {
-      await quizBookRepository.update(targetBook.id, targetBook);
-    }
+    if (!targetBook) return;
+
+    const updatedBook = {
+      ...targetBook,
+      chapters: targetBook.chapters.map(chapter => {
+        if (chapter.id !== chapterId) return chapter;
+
+        if (sectionId) {
+          return {
+            ...chapter,
+            sections: (chapter.sections || []).map(section => {
+              if (section.id !== sectionId) return section;
+
+              const updatedAnswers = (section.questionAnswers || [])
+                .filter(qa => qa.questionNumber !== questionNumber)
+                .map((qa, index) => ({
+                  ...qa,
+                  questionNumber: index + 1
+                }));
+
+              return {
+                ...section,
+                questionCount: Math.max(0, section.questionCount - 1),
+                questionAnswers: updatedAnswers
+              };
+            })
+          };
+        } else {
+          const updatedAnswers = (chapter.questionAnswers || [])
+            .filter(qa => qa.questionNumber !== questionNumber)
+            .map((qa, index) => ({
+              ...qa,
+              questionNumber: index + 1
+            }));
+
+          return {
+            ...chapter,
+            questionCount: Math.max(0, (chapter.questionCount || 0) - 1),
+            questionAnswers: updatedAnswers
+          };
+        }
+      }),
+      updatedAt: new Date()
+    };
+
+    await quizBookRepository.update(targetBook.id, updatedBook);
+    
+    // ✅ 保存後、全データを再取得
+    const allBooks = await quizBookRepository.getAll();
+    set({ quizBooks: allBooks });
   },
 }));

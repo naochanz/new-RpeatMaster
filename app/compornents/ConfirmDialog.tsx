@@ -1,7 +1,7 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { theme } from '@/constants/Theme';
+import { theme } from '@/constants/theme';
 import { AlertTriangle } from 'lucide-react-native';
+import React from 'react';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -28,7 +28,10 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <View style={styles.overlay}>
         <View style={styles.dialog}>
           <View style={styles.iconContainer}>
-            <AlertTriangle size={48} color={theme.colors.error[600]} />
+            <AlertTriangle
+              size={48}
+              style={{ color: theme.colors.error[600] }}
+            />
           </View>
 
           <Text style={styles.title}>{title}</Text>

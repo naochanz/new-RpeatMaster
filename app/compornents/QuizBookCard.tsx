@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Switch } from 'react-native'
-import React, { useState } from 'react'
-import { theme } from '@/constants/Theme'
-import { BookOpen, TrendingUp, RotateCw, MoreVertical, Edit, Trash2, Check, X } from 'lucide-react-native'
-import { useQuizBookStore } from '@/stores/quizBookStore'
+import { theme } from '@/constants/theme';
+import { useQuizBookStore } from '@/stores/quizBookStore';
+import { BookOpen, Check, Edit, MoreVertical, RotateCw, Trash2, TrendingUp, X } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface QuizBook {
   id: string;

@@ -1,22 +1,21 @@
-import { Text, View, ScrollView, StyleSheet, TouchableOpacity, TextInput, Modal, Alert } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { useLocalSearchParams, router, Stack } from 'expo-router'
-import { useQuizBookStore } from '@/stores/quizBookStore';
-import { theme } from '@/constants/Theme';
-import Card from '@/components/ui/Card';
-import { Plus, MoreVertical, Edit, Trash2, AlertCircle } from 'lucide-react-native';
 import ConfirmDialog from '@/app/compornents/ConfirmDialog';
+import Card from '@/components/ui/Card';
+import { theme } from '@/constants/theme';
+import { useQuizBookStore } from '@/stores/quizBookStore';
+import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { AlertCircle, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const StudyHome = () => {
     const { id } = useLocalSearchParams();
-    const {
-        quizBooks,
-        fetchQuizBooks,
-        getQuizBookById,
-        addChapterToQuizBook,
-        deleteChapterFromQuizBook,
-        updateChapterInQuizBook
-    } = useQuizBookStore();
+    
+    // ✅ 修正: quizBooks を直接購読
+    const quizBooks = useQuizBookStore(state => state.quizBooks);
+    const fetchQuizBooks = useQuizBookStore(state => state.fetchQuizBooks);
+    const addChapterToQuizBook = useQuizBookStore(state => state.addChapterToQuizBook);
+    const deleteChapterFromQuizBook = useQuizBookStore(state => state.deleteChapterFromQuizBook);
+    const updateChapterInQuizBook = useQuizBookStore(state => state.updateChapterInQuizBook);
 
     const [showAddModal, setShowAddModal] = useState(false);
     const [newChapterTitle, setNewChapterTitle] = useState('');
@@ -27,13 +26,15 @@ const StudyHome = () => {
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (quizBooks.length === 0) {
+    // ✅ 追加: 画面フォーカス時にデータを再取得
+    useFocusEffect(
+        useCallback(() => {
             fetchQuizBooks();
-        }
-    }, []);
+        }, [fetchQuizBooks])
+    );
 
-    const quizBook = getQuizBookById(id as string);
+    // ✅ 修正: quizBooks から直接検索
+    const quizBook = quizBooks.find(book => book.id === id);
 
     if (!quizBook) {
         return (
@@ -67,7 +68,6 @@ const StudyHome = () => {
                 params: { id: chapter.id }
             });
         } else {
-            // 初回のみsection画面へ遷移して選択
             router.push({
                 pathname: '/study/section/[chapterId]',
                 params: { chapterId: chapter.id }
@@ -163,6 +163,7 @@ const StudyHome = () => {
                                             onPress={(e) => toggleMenu(chapter.id, e)}
                                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                         >
+                                            {/* @ts-ignore */}
                                             <MoreVertical size={20} color={theme.colors.secondary[600]} />
                                         </TouchableOpacity>
 
@@ -201,6 +202,7 @@ const StudyHome = () => {
                                             style={styles.menuItem}
                                             onPress={(e) => handleEditChapter(chapter, e)}
                                         >
+                                            {/* @ts-ignore */}
                                             <Edit size={16} color={theme.colors.primary[600]} />
                                             <Text style={styles.menuText}>編集</Text>
                                         </TouchableOpacity>
@@ -209,6 +211,7 @@ const StudyHome = () => {
                                             style={styles.menuItem}
                                             onPress={(e) => handleDeleteChapter(chapter.id, e)}
                                         >
+                                            {/* @ts-ignore */}
                                             <Trash2 size={16} color={theme.colors.error[600]} />
                                             <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
                                         </TouchableOpacity>
@@ -223,12 +226,13 @@ const StudyHome = () => {
                         onPress={() => setShowAddModal(true)}
                         activeOpacity={0.7}
                     >
+                        {/* @ts-ignore */}
                         <Plus size={24} color={theme.colors.primary[600]} strokeWidth={2.5} />
                         <Text style={styles.addButtonText}>章を追加</Text>
                     </TouchableOpacity>
                 </ScrollView>
 
-                {/* 章追加モーダル */}
+                {/* モーダル部分は変更なし */}
                 <Modal
                     visible={showAddModal}
                     transparent
@@ -267,7 +271,6 @@ const StudyHome = () => {
                     </View>
                 </Modal>
 
-                {/* 章編集モーダル */}
                 <Modal
                     visible={showEditModal}
                     transparent
@@ -306,11 +309,10 @@ const StudyHome = () => {
                     </View>
                 </Modal>
 
-                {/* 削除確認ダイアログ */}
                 <ConfirmDialog
                     visible={deleteDialogVisible}
                     title="章を削除"
-                    message="この章を削除してもよろしいですか？この操作は取り消せません。"
+                    message="この章を削除してもよろしいですか?この操作は取り消せません。"
                     onConfirm={confirmDelete}
                     onCancel={() => setDeleteDialogVisible(false)}
                 />

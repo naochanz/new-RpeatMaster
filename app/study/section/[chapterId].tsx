@@ -1,23 +1,20 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { useQuizBookStore } from '@/stores/quizBookStore';
-import { useLocalSearchParams, router, Stack } from 'expo-router'
-import { theme } from '@/constants/Theme'
-import Card from '@/components/ui/Card'
-import { Plus, MoreVertical, Edit, Trash2, AlertCircle } from 'lucide-react-native';
 import ConfirmDialog from '@/app/compornents/ConfirmDialog';
+import Card from '@/components/ui/Card';
+import { theme } from '@/constants/theme';
+import { useQuizBookStore } from '@/stores/quizBookStore';
+import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { AlertCircle, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const SectionList = () => {
   const { chapterId } = useLocalSearchParams();
-  const {
-    quizBooks,
-    fetchQuizBooks,
-    getChapterById,
-    updateQuizBook,
-    addSectionToChapter,
-    deleteSectionFromChapter,
-    updateSectionInChapter
-  } = useQuizBookStore();
+  const quizBooks = useQuizBookStore(state => state.quizBooks);
+  const fetchQuizBooks = useQuizBookStore(state => state.fetchQuizBooks);
+  const updateQuizBook = useQuizBookStore(state => state.updateQuizBook);
+  const addSectionToChapter = useQuizBookStore(state => state.addSectionToChapter);
+  const deleteSectionFromChapter = useQuizBookStore(state => state.deleteSectionFromChapter);
+  const updateSectionInChapter = useQuizBookStore(state => state.updateSectionInChapter);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
@@ -28,13 +25,20 @@ const SectionList = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (quizBooks.length === 0) {
+  useFocusEffect(
+    useCallback(() => {
       fetchQuizBooks();
-    }
-  }, []);
+    }, [fetchQuizBooks])
+  );
 
-  const chapterData = getChapterById(String(chapterId));
+  let chapterData = null;
+  for (const book of quizBooks) {
+    const chapter = book.chapters.find(ch => ch.id === chapterId);
+    if (chapter) {
+      chapterData = { book, chapter };
+      break;
+    }
+  }
 
   if (!chapterData) {
     return (

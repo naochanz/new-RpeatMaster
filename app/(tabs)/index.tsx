@@ -1,13 +1,12 @@
 // app/(tabs)/index.tsx
-import { StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native';
-import React, { useState } from 'react';
-import QuizBookCard from '../compornents/QuizBookCard';
-import { router } from 'expo-router';
+import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
-import { theme } from '@/constants/Theme';
-import { Plus, AlertCircle } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { AlertCircle, Plus } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import ConfirmDialog from '../compornents/ConfirmDialog';
+import QuizBookCard from '../compornents/QuizBookCard';
 
 export default function HomeScreen() {
   const quizBooks = useQuizBookStore(state => state.quizBooks);
@@ -23,6 +22,7 @@ export default function HomeScreen() {
       chapterCount: 0,
       chapters: [],
       currentRate: 0,
+      useSections: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -66,7 +66,7 @@ export default function HomeScreen() {
           onPress={handleAddQuiz}
           activeOpacity={0.7}
         >
-          <Plus size={32} color={theme.colors.primary[600]} strokeWidth={2.5} />
+          <Plus size={32} color={theme.colors.primary[600] as string} strokeWidth={2.5} />
           <Text style={styles.addButtonText}>問題集を追加</Text>
         </TouchableOpacity>
       ) : (
@@ -81,32 +81,32 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.safeArea}>
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>登録済み問題集</Text>
-        </View>
-        {quizBooks.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyContent}>
-              <AlertCircle size={20} color={theme.colors.warning[600]} />
-              <Text style={styles.emptyText}>まだ問題集が登録されていません</Text>
-            </View>
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>登録済み問題集</Text>
+      </View>
+      {quizBooks.length === 0 ? (
+        <View style={styles.emptyState}>
+          <View style={styles.emptyContent}>
+            <AlertCircle size={20} color={theme.colors.warning[600] as string} />
+            <Text style={styles.emptyText}>まだ問題集が登録されていません</Text>
           </View>
-        ) : null}
-        <FlatList
-          data={displayData}
-          numColumns={2}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.flatListContainer}
-        />
-        <ConfirmDialog
-          visible={deleteDialogVisible}
-          title="問題集を削除"
-          message="この問題集を削除してもよろしいですか？この操作は取り消せません。"
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteDialogVisible(false)}
-        />
+        </View>
+      ) : null}
+      <FlatList
+        data={displayData}
+        numColumns={2}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.flatListContainer}
+      />
+      <ConfirmDialog
+        visible={deleteDialogVisible}
+        title="問題集を削除"
+        message="この問題集を削除してもよろしいですか？この操作は取り消せません。"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteDialogVisible(false)}
+      />
     </View>
   )
 }

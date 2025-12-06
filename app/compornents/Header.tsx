@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native'
-import React from 'react'
-import { theme } from '@/constants/Theme'
-import { Settings } from 'lucide-react-native'
+import { theme } from '@/constants/theme';
+import { Settings } from 'lucide-react-native';
+import React from 'react';
+import { Platform, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+;
 
 const Header = () => {
   return (

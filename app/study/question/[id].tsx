@@ -1,16 +1,18 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
-import { useQuizBookStore } from '@/stores/quizBookStore';
-import { useLocalSearchParams, Stack } from 'expo-router'
-import MemoModal from './compornent/MemoModal'
-import { theme } from '@/constants/Theme'
-import { Plus, Trash2 } from 'lucide-react-native'
 import ConfirmDialog from '@/app/compornents/ConfirmDialog';
+import { theme } from '@/constants/theme';
+import { useQuizBookStore } from '@/stores/quizBookStore';
+import { Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { Plus, Trash2 } from 'lucide-react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import MemoModal from './compornent/MemoModal';
 
 const QuestionList = () => {
     const { id } = useLocalSearchParams();
-    const { quizBooks, fetchQuizBooks, getChapterById, getSectionById } = useQuizBookStore();
-    const lastTap = useRef<number>(0);
+    
+    // ✅ quizBooks を直接購読
+    const quizBooks = useQuizBookStore(state => state.quizBooks);
+    const fetchQuizBooks = useQuizBookStore(state => state.fetchQuizBooks);
     const saveAnswer = useQuizBookStore(state => state.saveAnswer);
     const toggleAnswerLock = useQuizBookStore(state => state.toggleAnswerLock);
     const saveMemo = useQuizBookStore(state => state.saveMemo);
@@ -20,20 +22,42 @@ const QuestionList = () => {
     const addQuestionToTarget = useQuizBookStore(state => state.addQuestionToTarget);
     const deleteQuestionFromTarget = useQuizBookStore(state => state.deleteQuestionFromTarget);
 
+    const lastTap = useRef<number>(0);
+
     const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
     const [deleteTargetNumber, setDeleteTargetNumber] = useState<number | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState<number | null>(null);
     const [memoText, setMemoText] = useState('');
 
-    useEffect(() => {
-        if (quizBooks.length === 0) {
+    // ✅ 画面フォーカス時にデータを再取得
+    useFocusEffect(
+        useCallback(() => {
             fetchQuizBooks();
-        }
-    }, []);
+        }, [fetchQuizBooks])
+    );
 
-    const chapterData = getChapterById(String(id));
-    const sectionData = getSectionById(String(id));
+    // ✅ quizBooks から直接検索
+    let chapterData = null;
+    let sectionData = null;
+
+    for (const book of quizBooks) {
+        const chapter = book.chapters.find(ch => ch.id === id);
+        if (chapter) {
+            chapterData = { book, chapter };
+            break;
+        }
+
+        for (const chapter of book.chapters) {
+            const section = chapter.sections?.find(sec => sec.id === id);
+            if (section) {
+                sectionData = { book, chapter, section };
+                break;
+            }
+        }
+        if (sectionData) break;
+    }
+
     const chapterId = chapterData?.chapter.id || sectionData?.chapter.id || '';
     const sectionId = sectionData?.section.id || null;
 
@@ -75,10 +99,8 @@ const QuestionList = () => {
         if (!lastAttempt || lastAttempt.resultConfirmFlg) return;
 
         if (lastAttempt.result === '○') {
-            // ○→× に変更（新しい×を追加して古い○を削除する形）
             await updateLastAnswer(chapterId, sectionId, questionNumber, '×');
         } else {
-            // ×の場合は削除
             await deleteLastAnswer(chapterId, sectionId, questionNumber);
         }
     };
@@ -91,17 +113,14 @@ const QuestionList = () => {
             const questionData = getQuestionAnswers(chapterId, sectionId, questionNumber);
 
             if (!questionData) {
-                // 未回答の場合は○から開始
                 await addAnswer(questionNumber, '○');
             } else {
                 const lastAttempt = questionData.attempts[questionData.attempts.length - 1];
                 const isLocked = lastAttempt?.resultConfirmFlg;
 
                 if (isLocked) {
-                    // ロック済みの場合 → 新しいカードを追加
                     await addAnswer(questionNumber, '○');
                 } else {
-                    // 未ロック → 通常のトグル処理
                     await toggleAnswer(questionNumber);
                 }
             }
@@ -190,6 +209,7 @@ const QuestionList = () => {
                                             style={styles.deleteButton}
                                             onPress={() => handleDeleteQuestion(num)}
                                         >
+                                            {/* @ts-ignore */}
                                             <Trash2 size={16} color={theme.colors.error[600]} />
                                         </TouchableOpacity>
                                     </View>
@@ -309,6 +329,7 @@ const QuestionList = () => {
                         onPress={handleAddQuestion}
                         activeOpacity={0.7}
                     >
+                        {/* @ts-ignore */}
                         <Plus size={24} color={theme.colors.primary[600]} strokeWidth={2.5} />
                         <Text style={styles.addQuestionButtonText}>問題を追加</Text>
                     </TouchableOpacity>

@@ -1,3 +1,9 @@
+import {
+  ZenKakuGothicNew_400Regular,
+  ZenKakuGothicNew_500Medium,
+  ZenKakuGothicNew_700Bold,
+  ZenKakuGothicNew_900Black,
+} from '@expo-google-fonts/zen-kaku-gothic-new';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -5,19 +11,13 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-import {
-  ZenKakuGothicNew_400Regular,
-  ZenKakuGothicNew_500Medium,
-  ZenKakuGothicNew_700Bold,
-  ZenKakuGothicNew_900Black,
-} from '@expo-google-fonts/zen-kaku-gothic-new';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+  ErrorBoundary
 } from 'expo-router';
 
 export const unstable_settings = {
@@ -30,7 +30,6 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     'ZenKaku-Regular': ZenKakuGothicNew_400Regular,
     'ZenKaku-Medium': ZenKakuGothicNew_500Medium,
     'ZenKaku-Bold': ZenKakuGothicNew_700Bold,
