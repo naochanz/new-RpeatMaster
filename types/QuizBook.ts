@@ -2,6 +2,7 @@
 export interface QuizBook {
   id: string;
   title: string;
+  category: string;
   chapterCount: number;
   chapters: Chapter[];
   currentRate: number;

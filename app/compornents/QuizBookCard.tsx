@@ -1,12 +1,13 @@
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
-import { BookOpen, Check, Edit, MoreVertical, RotateCw, Trash2, TrendingUp, X } from 'lucide-react-native';
+import { ChevronDown, MoreVertical, Trash2 } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface QuizBook {
   id: string;
   title: string;
+  category: string;
   chapterCount: number;
   currentRate: number;
   useSections?: boolean;
@@ -18,31 +19,36 @@ interface QuizBookCardProps {
   quizBook: QuizBook;
   onPress: () => void;
   onDelete: () => void;
+  existingCategories: string[];
 }
 
-const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
+const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizBookCardProps) => {
   const updateQuizBook = useQuizBookStore(state => state.updateQuizBook);
   const [showMenu, setShowMenu] = useState(quizBook.title === '');
   const [editedTitle, setEditedTitle] = useState(quizBook.title);
+  const [editedCategory, setEditedCategory] = useState(quizBook.category);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [useSections, setUseSections] = useState(quizBook.useSections ?? undefined);
   const correctRate = quizBook.correctRate || 0;
 
   const handleMenuPress = (e: any) => {
     e.stopPropagation();
     setEditedTitle(quizBook.title);
+    setEditedCategory(quizBook.category);
     setShowMenu(true);
   };
 
   const handleSaveAndClose = async () => {
-    if (editedTitle.trim() === '') {
+    if (editedTitle.trim() === '' || editedCategory.trim() === '') {
       return;
     }
-    await updateQuizBook(quizBook.id, { title: editedTitle });
+    await updateQuizBook(quizBook.id, { title: editedTitle, category: editedCategory });
     setShowMenu(false);
   };
 
   const handleCloseMenu = () => {
     setEditedTitle(quizBook.title);
+    setEditedCategory(quizBook.category);
     setShowMenu(false);
   };
 
@@ -59,51 +65,52 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
 
   return (
     <>
-      <TouchableOpacity
-        style={styles.card}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
+      <View style={styles.bookContainer}>
         <TouchableOpacity
-          style={styles.menuButton}
-          onPress={handleMenuPress}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={styles.book}
+          onPress={onPress}
+          activeOpacity={0.8}
         >
-          <MoreVertical size={20} color={theme.colors.secondary[600]} />
+          <View style={styles.bookSpine}>
+            <View style={styles.bookTop} />
+            <View style={styles.bookMain}>
+              <TouchableOpacity
+                style={styles.menuButton}
+                onPress={handleMenuPress}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MoreVertical size={16} color={theme.colors.neutral.white} />
+              </TouchableOpacity>
+
+              <View style={styles.bookContent}>
+                <Text style={styles.bookTitle} numberOfLines={4}>
+                  {quizBook.title || '未設定'}
+                </Text>
+
+                <View style={styles.bookStats}>
+                  <View style={styles.bookStatItem}>
+                    <Text style={styles.bookStatLabel}>正答率</Text>
+                    <Text style={[styles.bookStatValue, {
+                      color: correctRate >= 80
+                        ? theme.colors.success[300]
+                        : correctRate >= 60
+                          ? theme.colors.warning[300]
+                          : theme.colors.error[300]
+                    }]}>{correctRate}%</Text>
+                  </View>
+                  <View style={styles.bookStatDivider} />
+                  <View style={styles.bookStatItem}>
+                    <Text style={styles.bookStatLabel}>周回</Text>
+                    <Text style={styles.bookStatValue}>{quizBook.currentRound || 0}</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+            <View style={styles.bookBottom} />
+          </View>
         </TouchableOpacity>
-
-        <View style={styles.iconContainer}>
-          <BookOpen size={32} color={theme.colors.primary[600]} />
-        </View>
-
-        <View style={styles.cardContent}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title} numberOfLines={2}>
-              {quizBook.title || '未設定'}
-            </Text>
-          </View>
-
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <TrendingUp size={14} color={theme.colors.secondary[600]} />
-              <Text style={styles.statLabel}>正答率</Text>
-              <Text style={[styles.statValue, {
-                color: correctRate >= 80
-                  ? theme.colors.success[600]
-                  : correctRate >= 60
-                    ? theme.colors.warning[600]
-                    : theme.colors.error[600]
-              }]}>{correctRate}%</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statItem}>
-              <RotateCw size={14} color={theme.colors.secondary[600]} />
-              <Text style={styles.statLabel}>周回</Text>
-              <Text style={styles.statValue}>{quizBook.currentRound || 0}回</Text>
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
+        <View style={styles.bookShadow} />
+      </View>
 
       <Modal
         visible={showMenu}
@@ -117,7 +124,34 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
               <Text style={styles.modalHeaderText}>問題集の設定</Text>
             </View>
 
-            <View style={styles.modalBody}>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>資格</Text>
+                <TouchableOpacity
+                  style={styles.categorySelector}
+                  onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                >
+                  <Text style={styles.categorySelectorText}>{editedCategory}</Text>
+                  <ChevronDown size={20} color={theme.colors.secondary[600]} />
+                </TouchableOpacity>
+                {showCategoryDropdown && (
+                  <View style={styles.categoryDropdown}>
+                    {existingCategories.map((cat) => (
+                      <TouchableOpacity
+                        key={cat}
+                        style={styles.categoryOption}
+                        onPress={() => {
+                          setEditedCategory(cat);
+                          setShowCategoryDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.categoryOptionText}>{cat}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+
               <View style={styles.inputSection}>
                 <Text style={styles.inputLabel}>タイトル</Text>
                 <TextInput
@@ -151,7 +185,7 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
                 <Trash2 size={20} color={theme.colors.error[600]} />
                 <Text style={styles.deleteButtonText}>問題集を削除</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
 
             <View style={styles.modalFooter}>
               <TouchableOpacity
@@ -175,66 +209,98 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    backgroundColor: theme.colors.neutral.white,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    aspectRatio: 1,
-    borderWidth: 1,
-    borderColor: theme.colors.secondary[200],
-    ...theme.shadows.md,
+  bookContainer: {
     position: 'relative',
+    aspectRatio: 0.7,
+  },
+  book: {
+    flex: 1,
+    position: 'relative',
+    zIndex: 2,
+  },
+  bookSpine: {
+    flex: 1,
+    backgroundColor: theme.colors.primary[600],
+    borderRadius: theme.borderRadius.sm,
+    overflow: 'hidden',
+    ...theme.shadows.lg,
+  },
+  bookTop: {
+    height: 8,
+    backgroundColor: theme.colors.primary[700],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.primary[800],
+  },
+  bookMain: {
+    flex: 1,
+    padding: theme.spacing.md,
+    justifyContent: 'space-between',
+    position: 'relative',
+  },
+  bookBottom: {
+    height: 8,
+    backgroundColor: theme.colors.primary[700],
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.primary[800],
+  },
+  bookShadow: {
+    position: 'absolute',
+    top: 4,
+    right: -4,
+    bottom: 4,
+    width: 8,
+    backgroundColor: theme.colors.primary[800],
+    borderTopRightRadius: theme.borderRadius.sm,
+    borderBottomRightRadius: theme.borderRadius.sm,
+    zIndex: 1,
   },
   menuButton: {
     position: 'absolute',
-    top: theme.spacing.sm,
-    right: theme.spacing.sm,
+    top: theme.spacing.xs,
+    right: theme.spacing.xs,
     zIndex: 10,
     padding: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: theme.borderRadius.sm,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  cardContent: {
+  bookContent: {
     flex: 1,
     justifyContent: 'space-between',
   },
-  titleContainer: {
-    height: 40,
-    justifyContent: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  title: {
+  bookTitle: {
     fontSize: theme.typography.fontSizes.base,
     fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.secondary[900],
-    textAlign: 'center',
+    color: theme.colors.neutral.white,
     fontFamily: 'ZenKaku-Bold',
+    textAlign: 'center',
+    lineHeight: 22,
   },
-  statsContainer: {
+  bookStats: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm,
+    gap: theme.spacing.xs,
+  },
+  bookStatItem: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.secondary[200],
-  },
-  statItem: {
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  statLabel: {
+  bookStatLabel: {
     fontSize: theme.typography.fontSizes.xs,
-    color: theme.colors.secondary[600],
+    color: theme.colors.neutral.white,
     fontFamily: 'ZenKaku-Regular',
+    opacity: 0.9,
   },
-  statValue: {
+  bookStatValue: {
     fontSize: theme.typography.fontSizes.sm,
     fontWeight: theme.typography.fontWeights.bold as any,
     fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.neutral.white,
   },
-  divider: {
-    width: 1,
-    backgroundColor: theme.colors.secondary[200],
+  bookStatDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   modalOverlay: {
     flex: 1,
@@ -287,6 +353,40 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.neutral.white,
     minHeight: 60,
     textAlignVertical: 'top',
+  },
+  categorySelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.secondary[300],
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.neutral.white,
+  },
+  categorySelectorText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Regular',
+    color: theme.colors.secondary[900],
+  },
+  categoryDropdown: {
+    marginTop: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.secondary[300],
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.neutral.white,
+    maxHeight: 150,
+    ...theme.shadows.md,
+  },
+  categoryOption: {
+    padding: theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.secondary[200],
+  },
+  categoryOptionText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Regular',
+    color: theme.colors.secondary[900],
   },
   menuItem: {
     flexDirection: 'row',

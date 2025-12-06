@@ -2,10 +2,12 @@ export const mockQuizBooks = [
     {
         id: '1',
         title: 'FP3級',
+        category: 'ファイナンシャルプランナー',
         chapterCount: 2,
         createdAt: new Date(),
         updatedAt: new Date(),
         currentRate: 85,
+        useSections: true,
         chapters: [
             {
                 id: '1',

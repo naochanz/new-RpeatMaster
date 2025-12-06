@@ -3,8 +3,9 @@ import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router } from 'expo-router';
 import { AlertCircle, Plus } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CategorySelectModal from '../compornents/CategorySelectModal';
 import ConfirmDialog from '../compornents/ConfirmDialog';
 import QuizBookCard from '../compornents/QuizBookCard';
 
@@ -14,11 +15,33 @@ export default function HomeScreen() {
   const deleteQuizBook = useQuizBookStore(state => state.deleteQuizBook);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
-  const handleAddQuiz = async () => {
+  const groupedQuizBooks = useMemo(() => {
+    const groups: { [key: string]: any[] } = {};
+    quizBooks.forEach((book) => {
+      const category = book.category || '未分類';
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(book);
+    });
+    return groups;
+  }, [quizBooks]);
+
+  const existingCategories = useMemo(() => {
+    return Array.from(new Set(quizBooks.map(book => book.category).filter(Boolean)));
+  }, [quizBooks]);
+
+  const handleAddQuiz = () => {
+    setCategoryModalVisible(true);
+  };
+
+  const handleCategorySelect = async (category: string) => {
     const newQuizBook = {
       id: `quiz-${Date.now()}`,
       title: '',
+      category: category,
       chapterCount: 0,
       chapters: [],
       currentRate: 0,
@@ -27,6 +50,7 @@ export default function HomeScreen() {
       updatedAt: new Date(),
     };
     await addQuizBook(newQuizBook);
+    setCategoryModalVisible(false);
   };
 
   const handleCardPress = (quizBookId: string) => {
@@ -49,37 +73,44 @@ export default function HomeScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.cardWrapper}>
-      <QuizBookCard
-        quizBook={item}
-        onPress={() => { handleCardPress(item.id) }}
-        onDelete={() => handleDelete(item.id)}
-      />
-    </View>
-  )
-
   return (
     <View style={styles.safeArea}>
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>登録済み問題集</Text>
       </View>
-      {quizBooks.length === 0 ? (
-        <View style={styles.emptyState}>
-          <View style={styles.emptyContent}>
-            <AlertCircle size={20} color={theme.colors.warning[600] as string} />
-            <Text style={styles.emptyText}>まだ問題集が登録されていません</Text>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {quizBooks.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyContent}>
+              <AlertCircle size={20} color={theme.colors.warning[600] as string} />
+              <Text style={styles.emptyText}>まだ問題集が登録されていません</Text>
+            </View>
           </View>
-        </View>
-      ) : null}
-      <FlatList
-        data={quizBooks}
-        numColumns={2}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        columnWrapperStyle={quizBooks.length > 1 ? styles.row : undefined}
-        contentContainerStyle={styles.flatListContainer}
-      />
+        ) : (
+          Object.entries(groupedQuizBooks).map(([category, books]) => (
+            <View key={category} style={styles.categorySection}>
+              <Text style={styles.categoryTitle}>{category}</Text>
+              <View style={styles.cardsGrid}>
+                {books.map((book) => (
+                  <View key={book.id} style={styles.cardWrapper}>
+                    <QuizBookCard
+                      quizBook={book}
+                      onPress={() => handleCardPress(book.id)}
+                      onDelete={() => handleDelete(book.id)}
+                      existingCategories={existingCategories}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
 
       <TouchableOpacity
         style={styles.fab}
@@ -88,6 +119,13 @@ export default function HomeScreen() {
       >
         <Plus size={28} color={theme.colors.neutral.white as string} strokeWidth={2.5} />
       </TouchableOpacity>
+
+      <CategorySelectModal
+        visible={categoryModalVisible}
+        categories={existingCategories}
+        onSelect={handleCategorySelect}
+        onClose={() => setCategoryModalVisible(false)}
+      />
 
       <ConfirmDialog
         visible={deleteDialogVisible}
@@ -116,18 +154,37 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.xl,
     fontWeight: theme.typography.fontWeights.bold as any,
     color: theme.colors.secondary[900],
-    // fontFamily: 'ZenKaku-Bold', // 一旦コメントアウト
+    fontFamily: 'ZenKaku-Bold',
   },
-  flatListContainer: {
-    padding: theme.spacing.md,
+  scrollView: {
+    flex: 1,
   },
-  row: {
-    justifyContent: 'space-between',
+  scrollContent: {
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl * 2,
+  },
+  categorySection: {
+    marginBottom: theme.spacing.xl,
+  },
+  categoryTitle: {
+    fontSize: theme.typography.fontSizes.lg,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.secondary[900],
     marginBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.primary[400],
+  },
+  cardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -theme.spacing.xs,
   },
   cardWrapper: {
-    width: '48%',
-    aspectRatio: 1,
+    width: '33.333%',
+    paddingHorizontal: theme.spacing.xs,
+    marginBottom: theme.spacing.md,
   },
   emptyState: {
     justifyContent: 'center',
