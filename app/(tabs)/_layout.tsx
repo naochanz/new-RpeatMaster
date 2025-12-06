@@ -1,34 +1,37 @@
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
-import { useColorScheme } from '@/components/useColorScheme';
-import { Colors } from '@/constants/theme';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
-}
+import { theme } from '@/constants/theme';
+import { Tabs } from 'expo-router';
+import { Home, Library } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        tabBarActiveTintColor: theme.colors.primary[600],
+        tabBarInactiveTintColor: theme.colors.secondary[400],
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: theme.colors.neutral.white,
+          borderTopColor: theme.colors.secondary[200],
+          borderTopWidth: 1,
+        },
+        tabBarLabelStyle: {
+          fontFamily: 'ZenKaku-Bold',
+          fontSize: 12,
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'HOME',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'ホーム',
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="library"
+        options={{
+          title: 'ライブラリ',
+          tabBarIcon: ({ color, size }) => <Library size={size} color={color} />,
         }}
       />
     </Tabs>

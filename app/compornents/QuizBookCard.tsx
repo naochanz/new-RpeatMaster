@@ -24,7 +24,7 @@ interface QuizBookCardProps {
 
 const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizBookCardProps) => {
   const updateQuizBook = useQuizBookStore(state => state.updateQuizBook);
-  const [showMenu, setShowMenu] = useState(quizBook.title === '');
+  const [showMenu, setShowMenu] = useState(false);
   const [editedTitle, setEditedTitle] = useState(quizBook.title);
   const [editedCategory, setEditedCategory] = useState(quizBook.category);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     right: theme.spacing.xs,
     zIndex: 10,
     padding: 4,
-    backgroundColor: theme.colors.neutral[100],
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: theme.borderRadius.sm,
   },
   bookContent: {
