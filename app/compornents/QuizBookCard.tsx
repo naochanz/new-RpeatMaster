@@ -22,36 +22,28 @@ interface QuizBookCardProps {
 
 const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
   const updateQuizBook = useQuizBookStore(state => state.updateQuizBook);
-  const [showMenu, setShowMenu] = useState(false);
-  const [isEditing, setIsEditing] = useState(quizBook.title === '');
+  const [showMenu, setShowMenu] = useState(quizBook.title === '');
   const [editedTitle, setEditedTitle] = useState(quizBook.title);
   const [useSections, setUseSections] = useState(quizBook.useSections ?? undefined);
   const correctRate = quizBook.correctRate || 0;
 
   const handleMenuPress = (e: any) => {
     e.stopPropagation();
-    setShowMenu(!showMenu);
+    setEditedTitle(quizBook.title);
+    setShowMenu(true);
   };
 
-  const handleEdit = (e: any) => {
-    e.stopPropagation();
-    setShowMenu(false);
-    setIsEditing(true);
-  };
-
-  const handleSaveTitle = async (e?: any) => {
-    if (e) e.stopPropagation();
+  const handleSaveAndClose = async () => {
     if (editedTitle.trim() === '') {
       return;
     }
     await updateQuizBook(quizBook.id, { title: editedTitle });
-    setIsEditing(false);
+    setShowMenu(false);
   };
 
-  const handleCancelEdit = (e: any) => {
-    e.stopPropagation();
+  const handleCloseMenu = () => {
     setEditedTitle(quizBook.title);
-    setIsEditing(false);
+    setShowMenu(false);
   };
 
   const handleDelete = (e: any) => {
@@ -65,42 +57,20 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
     await updateQuizBook(quizBook.id, { useSections: value });
   };
 
-  const handleCardPress = () => {
-    if (!isEditing) {
-      onPress();
-    }
-  };
-
   return (
     <>
       <TouchableOpacity
         style={styles.card}
-        onPress={handleCardPress}
-        activeOpacity={isEditing ? 1 : 0.7}
-        disabled={isEditing}
+        onPress={onPress}
+        activeOpacity={0.7}
       >
-        {!isEditing && (
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={handleMenuPress}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MoreVertical size={20} color={theme.colors.secondary[600]} />
-          </TouchableOpacity>
-        )}
-
-        {isEditing && (
-          <View style={styles.editActions}>
-            <TouchableOpacity onPress={handleSaveTitle} style={styles.actionButton}>
-              <Check size={20} color={theme.colors.success[600]} />
-            </TouchableOpacity>
-            {quizBook.title !== '' && (
-              <TouchableOpacity onPress={handleCancelEdit} style={styles.actionButton}>
-                <X size={20} color={theme.colors.error[600]} />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={handleMenuPress}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <MoreVertical size={20} color={theme.colors.secondary[600]} />
+        </TouchableOpacity>
 
         <View style={styles.iconContainer}>
           <BookOpen size={32} color={theme.colors.primary[600]} />
@@ -108,23 +78,9 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
 
         <View style={styles.cardContent}>
           <View style={styles.titleContainer}>
-            {isEditing ? (
-              <TextInput
-                style={styles.titleInput}
-                value={editedTitle}
-                onChangeText={setEditedTitle}
-                placeholder="問題集名を入力"
-                placeholderTextColor={theme.colors.secondary[400]}
-                multiline
-                numberOfLines={2}
-                autoFocus
-                onSubmitEditing={handleSaveTitle}
-              />
-            ) : (
-              <Text style={styles.title} numberOfLines={2}>
-                {quizBook.title || '未設定'}
-              </Text>
-            )}
+            <Text style={styles.title} numberOfLines={2}>
+              {quizBook.title || '未設定'}
+            </Text>
           </View>
 
           <View style={styles.statsContainer}>
@@ -153,25 +109,30 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
         visible={showMenu}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowMenu(false)}
+        onRequestClose={handleCloseMenu}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowMenu(false)}>
-          <View style={styles.modalContent}>
+        <Pressable style={styles.modalOverlay} onPress={handleCloseMenu}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{quizBook.title || '問題集'}</Text>
+              <Text style={styles.modalHeaderText}>問題集の設定</Text>
             </View>
 
-            <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
-              <View style={styles.menuItemContent}>
-                <Edit size={20} color={theme.colors.primary[600]} />
-                <Text style={styles.menuText}>タイトルを編集</Text>
+            <View style={styles.modalBody}>
+              <View style={styles.inputSection}>
+                <Text style={styles.inputLabel}>タイトル</Text>
+                <TextInput
+                  style={styles.titleInput}
+                  value={editedTitle}
+                  onChangeText={setEditedTitle}
+                  placeholder="問題集名を入力"
+                  placeholderTextColor={theme.colors.secondary[400]}
+                  multiline
+                />
               </View>
-            </TouchableOpacity>
 
-            <View style={styles.menuDivider} />
+              <View style={styles.menuDivider} />
 
-            <View style={styles.menuItem}>
-              <View style={styles.menuItemContent}>
+              <View style={styles.menuItem}>
                 <Text style={styles.menuText}>節を使用</Text>
                 <Switch
                   value={useSections ?? false}
@@ -183,17 +144,30 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
                   thumbColor={useSections ? theme.colors.primary[600] : theme.colors.neutral.white}
                 />
               </View>
+
+              <View style={styles.menuDivider} />
+
+              <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                <Trash2 size={20} color={theme.colors.error[600]} />
+                <Text style={styles.deleteButtonText}>問題集を削除</Text>
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.menuDivider} />
-
-            <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
-              <View style={styles.menuItemContent}>
-                <Trash2 size={20} color={theme.colors.error[600]} />
-                <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.footerButton, styles.cancelButton]}
+                onPress={handleCloseMenu}
+              >
+                <Text style={styles.cancelButtonText}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.footerButton, styles.saveButton]}
+                onPress={handleSaveAndClose}
+              >
+                <Text style={styles.saveButtonText}>保存</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
         </Pressable>
       </Modal>
     </>
@@ -219,17 +193,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 4,
   },
-  editActions: {
-    position: 'absolute',
-    top: theme.spacing.sm,
-    right: theme.spacing.sm,
-    zIndex: 10,
-    flexDirection: 'row',
-    gap: theme.spacing.xs,
-  },
-  actionButton: {
-    padding: 4,
-  },
   iconContainer: {
     alignItems: 'center',
     marginBottom: theme.spacing.sm,
@@ -249,18 +212,6 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary[900],
     textAlign: 'center',
     fontFamily: 'ZenKaku-Bold',
-  },
-  titleInput: {
-    fontSize: theme.typography.fontSizes.base,
-    fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.secondary[900],
-    textAlign: 'center',
-    fontFamily: 'ZenKaku-Bold',
-    borderWidth: 1,
-    borderColor: theme.colors.primary[300],
-    borderRadius: theme.borderRadius.sm,
-    padding: theme.spacing.xs,
-    backgroundColor: theme.colors.primary[50],
   },
   statsContainer: {
     flexDirection: 'row',
@@ -306,32 +257,93 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.secondary[200],
   },
-  modalTitle: {
+  modalHeaderText: {
     fontSize: theme.typography.fontSizes.lg,
     fontWeight: theme.typography.fontWeights.bold as any,
     fontFamily: 'ZenKaku-Bold',
     color: theme.colors.secondary[900],
     textAlign: 'center',
   },
-  menuItem: {
+  modalBody: {
     padding: theme.spacing.lg,
   },
-  menuItemContent: {
+  inputSection: {
+    marginBottom: theme.spacing.md,
+  },
+  inputLabel: {
+    fontSize: theme.typography.fontSizes.sm,
+    fontFamily: 'ZenKaku-Medium',
+    color: theme.colors.secondary[700],
+    marginBottom: theme.spacing.xs,
+  },
+  titleInput: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Regular',
+    color: theme.colors.secondary[900],
+    borderWidth: 1,
+    borderColor: theme.colors.secondary[300],
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.neutral.white,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.md,
   },
   menuDivider: {
     height: 1,
     backgroundColor: theme.colors.secondary[200],
-    marginHorizontal: theme.spacing.lg,
+    marginVertical: theme.spacing.md,
   },
   menuText: {
     fontSize: theme.typography.fontSizes.base,
     fontFamily: 'ZenKaku-Medium',
     color: theme.colors.secondary[900],
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
+  },
+  deleteButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Medium',
+    color: theme.colors.error[600],
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.secondary[200],
+  },
+  footerButton: {
     flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: theme.colors.secondary[100],
+  },
+  cancelButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.secondary[700],
+  },
+  saveButton: {
+    backgroundColor: theme.colors.primary[600],
+  },
+  saveButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.neutral.white,
   },
 });
 
