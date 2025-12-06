@@ -2,7 +2,7 @@ import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { BookOpen, Check, Edit, MoreVertical, RotateCw, Trash2, TrendingUp, X } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface QuizBook {
   id: string;
@@ -72,7 +72,7 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
   };
 
   return (
-    <View style={styles.container}>
+    <>
       <TouchableOpacity
         style={styles.card}
         onPress={handleCardPress}
@@ -149,41 +149,58 @@ const QuizBookCard = ({ quizBook, onPress, onDelete }: QuizBookCardProps) => {
         </View>
       </TouchableOpacity>
 
-      {showMenu && (
-        <View style={styles.menu}>
-          <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
-            <Edit size={16} color={theme.colors.primary[600]} />
-            <Text style={styles.menuText}>編集</Text>
-          </TouchableOpacity>
-          <View style={styles.menuDivider} />
-          <View style={styles.menuItem}>
-            <Text style={styles.menuText}>節を使用</Text>
-            <Switch
-              value={useSections ?? false}
-              onValueChange={handleToggleSections}
-              trackColor={{
-                false: theme.colors.secondary[300],
-                true: theme.colors.primary[400]
-              }}
-              thumbColor={useSections ? theme.colors.primary[600] : theme.colors.neutral.white}
-            />
+      <Modal
+        visible={showMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowMenu(false)}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{quizBook.title || '問題集'}</Text>
+            </View>
+
+            <TouchableOpacity style={styles.menuItem} onPress={handleEdit}>
+              <View style={styles.menuItemContent}>
+                <Edit size={20} color={theme.colors.primary[600]} />
+                <Text style={styles.menuText}>タイトルを編集</Text>
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.menuDivider} />
+
+            <View style={styles.menuItem}>
+              <View style={styles.menuItemContent}>
+                <Text style={styles.menuText}>節を使用</Text>
+                <Switch
+                  value={useSections ?? false}
+                  onValueChange={handleToggleSections}
+                  trackColor={{
+                    false: theme.colors.secondary[300],
+                    true: theme.colors.primary[400]
+                  }}
+                  thumbColor={useSections ? theme.colors.primary[600] : theme.colors.neutral.white}
+                />
+              </View>
+            </View>
+
+            <View style={styles.menuDivider} />
+
+            <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
+              <View style={styles.menuItemContent}>
+                <Trash2 size={20} color={theme.colors.error[600]} />
+                <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-          <View style={styles.menuDivider} />
-          <TouchableOpacity style={styles.menuItem} onPress={handleDelete}>
-            <Trash2 size={16} color={theme.colors.error[600]} />
-            <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+        </Pressable>
+      </Modal>
+    </>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    position: 'relative'
-  },
   card: {
     flex: 1,
     backgroundColor: theme.colors.neutral.white,
@@ -268,35 +285,53 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: theme.colors.secondary[200],
   },
-  menu: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    marginTop: theme.spacing.xs,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
     backgroundColor: theme.colors.neutral.white,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.secondary[200],
-    ...theme.shadows.lg,
+    borderRadius: theme.borderRadius.xl,
+    ...theme.shadows.xl,
     overflow: 'hidden',
-    zIndex: 100,
+  },
+  modalHeader: {
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.primary[50],
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.secondary[200],
+  },
+  modalTitle: {
+    fontSize: theme.typography.fontSizes.lg,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.secondary[900],
+    textAlign: 'center',
   },
   menuItem: {
+    padding: theme.spacing.lg,
+  },
+  menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    gap: theme.spacing.md,
   },
   menuDivider: {
     height: 1,
     backgroundColor: theme.colors.secondary[200],
+    marginHorizontal: theme.spacing.lg,
   },
   menuText: {
     fontSize: theme.typography.fontSizes.base,
     fontFamily: 'ZenKaku-Medium',
     color: theme.colors.secondary[900],
+    flex: 1,
   },
 });
 

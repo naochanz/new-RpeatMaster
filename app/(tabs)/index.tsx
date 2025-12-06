@@ -49,33 +49,13 @@ export default function HomeScreen() {
     }
   };
 
-  const displayData = [
-    ...quizBooks,
-    {
-      id: 'addButton',
-      title: '+ 問題集を追加',
-      isAddButton: true,
-    }
-  ];
-
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.cardWrapper}>
-      {item.isAddButton ? (
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={handleAddQuiz}
-          activeOpacity={0.7}
-        >
-          <Plus size={32} color={theme.colors.primary[600] as string} strokeWidth={2.5} />
-          <Text style={styles.addButtonText}>問題集を追加</Text>
-        </TouchableOpacity>
-      ) : (
-        <QuizBookCard
-          quizBook={item}
-          onPress={() => { handleCardPress(item.id) }}
-          onDelete={() => handleDelete(item.id)}
-        />
-      )}
+      <QuizBookCard
+        quizBook={item}
+        onPress={() => { handleCardPress(item.id) }}
+        onDelete={() => handleDelete(item.id)}
+      />
     </View>
   )
 
@@ -93,13 +73,22 @@ export default function HomeScreen() {
         </View>
       ) : null}
       <FlatList
-        data={displayData}
+        data={quizBooks}
         numColumns={2}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        columnWrapperStyle={styles.row}
+        columnWrapperStyle={quizBooks.length > 1 ? styles.row : undefined}
         contentContainerStyle={styles.flatListContainer}
       />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={handleAddQuiz}
+        activeOpacity={0.8}
+      >
+        <Plus size={28} color={theme.colors.neutral.white as string} strokeWidth={2.5} />
+      </TouchableOpacity>
+
       <ConfirmDialog
         visible={deleteDialogVisible}
         title="問題集を削除"
@@ -155,21 +144,17 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.base,
     color: theme.colors.secondary[600],
   },
-  addButton: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: theme.colors.neutral.white,
-    borderWidth: 2,
-    borderColor: theme.colors.primary[300],
-    borderStyle: 'dashed',
-    borderRadius: theme.borderRadius.lg,
+  fab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    bottom: theme.spacing.xl,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary[600],
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    ...theme.shadows.lg,
+    elevation: 8,
   },
-  addButtonText: {
-    fontSize: theme.typography.fontSizes.base,
-    color: theme.colors.primary[600],
-    fontWeight: theme.typography.fontWeights.bold as any,
-  }
 });
