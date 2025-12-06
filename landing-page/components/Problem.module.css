@@ -1,0 +1,123 @@
+.problem {
+  padding: 140px 20px;
+  background: #0d1117;
+  position: relative;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 80px;
+  color: #d1d5db;
+  letter-spacing: -0.02em;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.title.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.problems {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+}
+
+.problemCard {
+  background: #1c2128;
+  padding: 56px 40px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  text-align: left;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.problemCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 0;
+  background: #2563eb;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.problemCard.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card1.visible {
+  transition-delay: 0.1s;
+}
+
+.card2.visible {
+  transition-delay: 0.2s;
+}
+
+.card3.visible {
+  transition-delay: 0.3s;
+}
+
+.problemCard:hover {
+  border-color: #30363d;
+  background: #1c2128;
+}
+
+.problemCard:hover::before {
+  height: 100%;
+}
+
+.emoji {
+  font-size: 32px;
+  margin-bottom: 28px;
+  display: block;
+  opacity: 0.5;
+}
+
+.problemCard h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: #c9d1d9;
+  letter-spacing: -0.01em;
+}
+
+.problemCard p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #8b949e;
+}
+
+@media (max-width: 768px) {
+  .problem {
+    padding: 70px 20px;
+  }
+
+  .title {
+    font-size: 32px;
+    margin-bottom: 50px;
+  }
+
+  .problems {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .problemCard {
+    padding: 40px 28px;
+  }
+}
