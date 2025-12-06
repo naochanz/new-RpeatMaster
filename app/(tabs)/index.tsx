@@ -1,34 +1,56 @@
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router } from 'expo-router';
-import { AlertCircle, BookOpen, TrendingUp } from 'lucide-react-native';
+import { AlertCircle, BookOpen, ChevronRight } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+interface QualificationStats {
+  category: string;
+  totalBooks: number;
+  avgCorrectRate: number;
+  totalRounds: number;
+  books: any[];
+}
 
 export default function DashboardScreen() {
   const quizBooks = useQuizBookStore(state => state.quizBooks);
 
-  const stats = useMemo(() => {
-    const totalBooks = quizBooks.length;
-    const totalRounds = quizBooks.reduce((sum, book) => sum + (book.currentRound || 0), 0);
-    const avgCorrectRate = quizBooks.length > 0
-      ? Math.round(quizBooks.reduce((sum, book) => sum + (book.correctRate || 0), 0) / quizBooks.length)
-      : 0;
+  const qualificationStats = useMemo(() => {
+    const statsMap: { [key: string]: QualificationStats } = {};
 
-    return { totalBooks, totalRounds, avgCorrectRate };
+    quizBooks.forEach(book => {
+      const category = book.category || '未分類';
+      if (!statsMap[category]) {
+        statsMap[category] = {
+          category,
+          totalBooks: 0,
+          avgCorrectRate: 0,
+          totalRounds: 0,
+          books: [],
+        };
+      }
+
+      statsMap[category].totalBooks += 1;
+      statsMap[category].totalRounds += (book.currentRound || 0);
+      statsMap[category].books.push(book);
+    });
+
+    Object.keys(statsMap).forEach(category => {
+      const books = statsMap[category].books;
+      const totalCorrectRate = books.reduce((sum, book) => sum + (book.correctRate || 0), 0);
+      statsMap[category].avgCorrectRate = books.length > 0
+        ? Math.round(totalCorrectRate / books.length)
+        : 0;
+    });
+
+    return Object.values(statsMap).sort((a, b) => b.avgCorrectRate - a.avgCorrectRate);
   }, [quizBooks]);
 
-  const sortedByRounds = useMemo(() => {
-    return [...quizBooks]
-      .filter(book => book.title)
-      .sort((a, b) => (b.currentRound || 0) - (a.currentRound || 0))
-      .slice(0, 5);
-  }, [quizBooks]);
-
-  const handleBookPress = (bookId: string) => {
+  const handleQualificationPress = (category: string) => {
     router.push({
-      pathname: '/study/[id]',
-      params: { id: bookId },
+      pathname: '/dashboard/qualification/[category]',
+      params: { category },
     });
   };
 
@@ -36,119 +58,89 @@ export default function DashboardScreen() {
     router.push('/(tabs)/library');
   };
 
+  const getCorrectRateColor = (rate: number) => {
+    if (rate >= 80) return theme.colors.success[600];
+    if (rate >= 60) return theme.colors.warning[600];
+    return theme.colors.error[600];
+  };
+
+  const getCorrectRateBackground = (rate: number) => {
+    if (rate >= 80) return theme.colors.success[50];
+    if (rate >= 60) return theme.colors.warning[50];
+    return theme.colors.error[50];
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>ダッシュボード</Text>
-        <Text style={styles.headerSubtitle}>学習の進捗を確認しましょう</Text>
-      </View>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.statsGrid}>
-          <View style={[styles.statCard, styles.statCardPrimary]}>
-            <View style={styles.statIconContainer}>
-              <BookOpen size={24} color={theme.colors.primary[600]} />
-            </View>
-            <Text style={styles.statValue}>{stats.totalBooks}</Text>
-            <Text style={styles.statLabel}>登録問題集</Text>
+        {qualificationStats.length === 0 ? (
+          <View style={styles.emptyState}>
+            <AlertCircle size={64} color={theme.colors.primary[300]} />
+            <Text style={styles.emptyTitle}>まだ資格が登録されていません</Text>
+            <Text style={styles.emptyDescription}>
+              ライブラリから資格と問題集を追加して{'\n'}学習を始めましょう
+            </Text>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={handleNavigateToLibrary}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.emptyButtonText}>ライブラリへ移動</Text>
+            </TouchableOpacity>
           </View>
-
-          <View style={[styles.statCard, styles.statCardSecondary]}>
-            <View style={styles.statIconContainer}>
-              <TrendingUp size={24} color={theme.colors.primary[600]} />
-            </View>
-            <Text style={styles.statValue}>{stats.totalRounds}</Text>
-            <Text style={styles.statLabel}>総周回数</Text>
-          </View>
-
-          <View style={[styles.statCard, styles.statCardAccent]}>
-            <View style={styles.statIconContainer}>
-              <View style={styles.percentageIcon}>
-                <Text style={styles.percentageText}>%</Text>
-              </View>
-            </View>
-            <Text style={[styles.statValue, {
-              color: stats.avgCorrectRate >= 80
-                ? theme.colors.success[600]
-                : stats.avgCorrectRate >= 60
-                  ? theme.colors.warning[600]
-                  : theme.colors.error[600]
-            }]}>{stats.avgCorrectRate}%</Text>
-            <Text style={styles.statLabel}>平均正答率</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>周回数ランキング</Text>
-          </View>
-
-          {sortedByRounds.length === 0 ? (
-            <View style={styles.emptyState}>
-              <AlertCircle size={40} color={theme.colors.primary[300]} />
-              <Text style={styles.emptyTitle}>問題集がありません</Text>
-              <Text style={styles.emptyDescription}>
-                ライブラリから問題集を追加して学習を始めましょう
-              </Text>
+        ) : (
+          <View style={styles.qualificationList}>
+            {qualificationStats.map((qual) => (
               <TouchableOpacity
-                style={styles.emptyButton}
-                onPress={handleNavigateToLibrary}
+                key={qual.category}
+                style={styles.qualificationCard}
+                onPress={() => handleQualificationPress(qual.category)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.emptyButtonText}>ライブラリへ移動</Text>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTitleContainer}>
+                    <Text style={styles.cardTitle}>{qual.category}</Text>
+                    <View style={styles.bookCountBadge}>
+                      <BookOpen size={14} color={theme.colors.primary[600]} />
+                      <Text style={styles.bookCountText}>{qual.totalBooks}</Text>
+                    </View>
+                  </View>
+                  <ChevronRight size={20} color={theme.colors.secondary[400]} />
+                </View>
+
+                <View style={styles.cardBody}>
+                  <View style={styles.statRow}>
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>平均正答率</Text>
+                      <View style={[
+                        styles.correctRateBadge,
+                        { backgroundColor: getCorrectRateBackground(qual.avgCorrectRate) }
+                      ]}>
+                        <Text style={[
+                          styles.correctRateValue,
+                          { color: getCorrectRateColor(qual.avgCorrectRate) }
+                        ]}>
+                          {qual.avgCorrectRate}%
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.statDivider} />
+
+                    <View style={styles.statItem}>
+                      <Text style={styles.statLabel}>総周回数</Text>
+                      <Text style={styles.roundValue}>{qual.totalRounds}</Text>
+                    </View>
+                  </View>
+                </View>
               </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.rankingList}>
-              {sortedByRounds.map((book, index) => (
-                <TouchableOpacity
-                  key={book.id}
-                  style={styles.rankingItem}
-                  onPress={() => handleBookPress(book.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.rankingLeft}>
-                    <View style={[
-                      styles.rankBadge,
-                      index === 0 && styles.rankBadgeGold,
-                      index === 1 && styles.rankBadgeSilver,
-                      index === 2 && styles.rankBadgeBronze,
-                    ]}>
-                      <Text style={[
-                        styles.rankNumber,
-                        index < 3 && styles.rankNumberMedal,
-                      ]}>{index + 1}</Text>
-                    </View>
-                    <View style={styles.rankingInfo}>
-                      <Text style={styles.rankingTitle} numberOfLines={1}>
-                        {book.title || '未設定'}
-                      </Text>
-                      <Text style={styles.rankingCategory} numberOfLines={1}>
-                        {book.category}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.rankingRight}>
-                    <Text style={styles.rankingRounds}>{book.currentRound || 0}</Text>
-                    <Text style={styles.rankingRoundsLabel}>周回</Text>
-                    <View style={styles.rankingDivider} />
-                    <Text style={[styles.rankingCorrect, {
-                      color: (book.correctRate || 0) >= 80
-                        ? theme.colors.success[600]
-                        : (book.correctRate || 0) >= 60
-                          ? theme.colors.warning[600]
-                          : theme.colors.error[600]
-                    }]}>{book.correctRate || 0}%</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -159,133 +151,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.neutral[50],
   },
-  header: {
-    backgroundColor: theme.colors.primary[50],
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.primary[200],
-  },
-  headerTitle: {
-    fontSize: theme.typography.fontSizes['2xl'],
-    fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.secondary[900],
-    fontFamily: 'ZenKaku-Bold',
-    marginBottom: theme.spacing.xs,
-  },
-  headerSubtitle: {
-    fontSize: theme.typography.fontSizes.sm,
-    color: theme.colors.secondary[600],
-    fontFamily: 'ZenKaku-Regular',
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: theme.colors.neutral.white,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
-    alignItems: 'center',
-    borderWidth: 2,
-    ...theme.shadows.sm,
-  },
-  statCardPrimary: {
-    borderColor: theme.colors.primary[300],
-  },
-  statCardSecondary: {
-    borderColor: theme.colors.primary[200],
-  },
-  statCardAccent: {
-    borderColor: theme.colors.primary[400],
-  },
-  statIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.primary[50],
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  percentageIcon: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  percentageText: {
-    fontSize: 20,
-    fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.primary[600],
-    fontFamily: 'ZenKaku-Bold',
-  },
-  statValue: {
-    fontSize: theme.typography.fontSizes['2xl'],
-    fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.secondary[900],
-    fontFamily: 'ZenKaku-Bold',
-    marginBottom: theme.spacing.xs,
-  },
-  statLabel: {
-    fontSize: theme.typography.fontSizes.xs,
-    color: theme.colors.secondary[600],
-    fontFamily: 'ZenKaku-Regular',
-  },
-  section: {
-    marginBottom: theme.spacing.xl,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.fontSizes.lg,
-    fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.secondary[900],
-    fontFamily: 'ZenKaku-Bold',
+    paddingTop: theme.spacing.xl,
   },
   emptyState: {
-    backgroundColor: theme.colors.neutral.white,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xl,
+    flex: 1,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.primary[200],
-    borderStyle: 'dashed',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.xl * 3,
   },
   emptyTitle: {
-    fontSize: theme.typography.fontSizes.lg,
+    fontSize: theme.typography.fontSizes.xl,
     fontWeight: theme.typography.fontWeights.bold as any,
     color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
-    marginTop: theme.spacing.md,
+    marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.xs,
   },
   emptyDescription: {
-    fontSize: theme.typography.fontSizes.sm,
+    fontSize: theme.typography.fontSizes.base,
     color: theme.colors.secondary[600],
     fontFamily: 'ZenKaku-Regular',
     textAlign: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+    lineHeight: 24,
   },
   emptyButton: {
     backgroundColor: theme.colors.primary[600],
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
     paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
+    ...theme.shadows.md,
   },
   emptyButtonText: {
     fontSize: theme.typography.fontSizes.base,
@@ -293,93 +193,94 @@ const styles = StyleSheet.create({
     color: theme.colors.neutral.white,
     fontFamily: 'ZenKaku-Bold',
   },
-  rankingList: {
+  qualificationList: {
     gap: theme.spacing.md,
   },
-  rankingItem: {
+  qualificationCard: {
     backgroundColor: theme.colors.neutral.white,
     borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.md,
+    borderWidth: 2,
+    borderColor: theme.colors.primary[200],
+    overflow: 'hidden',
+    ...theme.shadows.md,
+  },
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: theme.colors.primary[200],
-    ...theme.shadows.sm,
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.primary[50],
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.primary[200],
   },
-  rankingLeft: {
+  cardTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    marginRight: theme.spacing.md,
-  },
-  rankBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.secondary[200],
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: theme.spacing.md,
-  },
-  rankBadgeGold: {
-    backgroundColor: '#ffd700',
-  },
-  rankBadgeSilver: {
-    backgroundColor: '#c0c0c0',
-  },
-  rankBadgeBronze: {
-    backgroundColor: '#cd7f32',
-  },
-  rankNumber: {
-    fontSize: theme.typography.fontSizes.base,
-    fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.secondary[700],
-    fontFamily: 'ZenKaku-Bold',
-  },
-  rankNumberMedal: {
-    color: theme.colors.neutral.white,
-  },
-  rankingInfo: {
+    gap: theme.spacing.sm,
     flex: 1,
   },
-  rankingTitle: {
-    fontSize: theme.typography.fontSizes.base,
+  cardTitle: {
+    fontSize: theme.typography.fontSizes.lg,
     fontWeight: theme.typography.fontWeights.bold as any,
     color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
-    marginBottom: theme.spacing.xs,
   },
-  rankingCategory: {
-    fontSize: theme.typography.fontSizes.xs,
-    color: theme.colors.secondary[600],
-    fontFamily: 'ZenKaku-Regular',
-  },
-  rankingRight: {
+  bookCountBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    minWidth: 60,
+    gap: 4,
+    backgroundColor: theme.colors.neutral.white,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 4,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.primary[300],
   },
-  rankingRounds: {
-    fontSize: theme.typography.fontSizes.xl,
-    fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.primary[600],
-    fontFamily: 'ZenKaku-Bold',
-  },
-  rankingRoundsLabel: {
-    fontSize: theme.typography.fontSizes.xs,
-    color: theme.colors.secondary[600],
-    fontFamily: 'ZenKaku-Regular',
-    marginBottom: theme.spacing.xs,
-  },
-  rankingDivider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: theme.colors.secondary[200],
-    marginVertical: theme.spacing.xs,
-  },
-  rankingCorrect: {
+  bookCountText: {
     fontSize: theme.typography.fontSizes.sm,
     fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.primary[700],
+    fontFamily: 'ZenKaku-Bold',
+  },
+  cardBody: {
+    padding: theme.spacing.lg,
+  },
+  statRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.secondary[600],
+    fontFamily: 'ZenKaku-Regular',
+    marginBottom: theme.spacing.sm,
+  },
+  correctRateBadge: {
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  correctRateValue: {
+    fontSize: theme.typography.fontSizes.xl,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    fontFamily: 'ZenKaku-Bold',
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: theme.colors.secondary[200],
+    marginHorizontal: theme.spacing.md,
+  },
+  roundValue: {
+    fontSize: theme.typography.fontSizes.xl,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
   },
 });

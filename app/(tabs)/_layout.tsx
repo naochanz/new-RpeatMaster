@@ -1,4 +1,3 @@
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { theme } from '@/constants/theme';
 import { Tabs } from 'expo-router';
 import { Home, Library } from 'lucide-react-native';
