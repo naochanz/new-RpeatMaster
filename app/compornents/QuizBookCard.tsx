@@ -39,7 +39,7 @@ const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizB
   };
 
   const handleSaveAndClose = async () => {
-    if (editedTitle.trim() === '' || editedCategory.trim() === '') {
+    if (editedTitle.trim() === '') {
       return;
     }
     await updateQuizBook(quizBook.id, { title: editedTitle, category: editedCategory });
@@ -79,7 +79,7 @@ const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizB
                 onPress={handleMenuPress}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <MoreVertical size={16} color={theme.colors.neutral.white} />
+                <MoreVertical size={16} color={theme.colors.secondary[600]} />
               </TouchableOpacity>
 
               <View style={styles.bookContent}>
@@ -92,16 +92,16 @@ const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizB
                     <Text style={styles.bookStatLabel}>正答率</Text>
                     <Text style={[styles.bookStatValue, {
                       color: correctRate >= 80
-                        ? theme.colors.success[300]
+                        ? theme.colors.success[600]
                         : correctRate >= 60
-                          ? theme.colors.warning[300]
-                          : theme.colors.error[300]
+                          ? theme.colors.warning[600]
+                          : theme.colors.error[600]
                     }]}>{correctRate}%</Text>
                   </View>
                   <View style={styles.bookStatDivider} />
                   <View style={styles.bookStatItem}>
                     <Text style={styles.bookStatLabel}>周回</Text>
-                    <Text style={styles.bookStatValue}>{quizBook.currentRound || 0}</Text>
+                    <Text style={[styles.bookStatValue, { color: theme.colors.secondary[900] }]}>{quizBook.currentRound || 0}</Text>
                   </View>
                 </View>
               </View>
@@ -220,16 +220,16 @@ const styles = StyleSheet.create({
   },
   bookSpine: {
     flex: 1,
-    backgroundColor: theme.colors.primary[600],
-    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.neutral.white,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.primary[600],
     overflow: 'hidden',
-    ...theme.shadows.lg,
+    ...theme.shadows.md,
   },
   bookTop: {
-    height: 8,
-    backgroundColor: theme.colors.primary[700],
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.primary[800],
+    height: 6,
+    backgroundColor: theme.colors.primary[600],
   },
   bookMain: {
     flex: 1,
@@ -238,20 +238,17 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   bookBottom: {
-    height: 8,
-    backgroundColor: theme.colors.primary[700],
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.primary[800],
+    height: 6,
+    backgroundColor: theme.colors.primary[600],
   },
   bookShadow: {
     position: 'absolute',
-    top: 4,
-    right: -4,
-    bottom: 4,
-    width: 8,
-    backgroundColor: theme.colors.primary[800],
-    borderTopRightRadius: theme.borderRadius.sm,
-    borderBottomRightRadius: theme.borderRadius.sm,
+    top: 3,
+    right: -3,
+    bottom: 3,
+    width: 6,
+    backgroundColor: theme.colors.primary[200],
+    borderRadius: theme.borderRadius.sm,
     zIndex: 1,
   },
   menuButton: {
@@ -260,7 +257,7 @@ const styles = StyleSheet.create({
     right: theme.spacing.xs,
     zIndex: 10,
     padding: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: theme.colors.neutral[100],
     borderRadius: theme.borderRadius.sm,
   },
   bookContent: {
@@ -270,16 +267,18 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: theme.typography.fontSizes.base,
     fontWeight: theme.typography.fontWeights.bold as any,
-    color: theme.colors.neutral.white,
+    color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
     textAlign: 'center',
     lineHeight: 22,
   },
   bookStats: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: theme.colors.neutral[50],
     borderRadius: theme.borderRadius.sm,
     padding: theme.spacing.sm,
     gap: theme.spacing.xs,
+    borderWidth: 1,
+    borderColor: theme.colors.primary[200],
   },
   bookStatItem: {
     flexDirection: 'row',
@@ -288,19 +287,17 @@ const styles = StyleSheet.create({
   },
   bookStatLabel: {
     fontSize: theme.typography.fontSizes.xs,
-    color: theme.colors.neutral.white,
+    color: theme.colors.secondary[700],
     fontFamily: 'ZenKaku-Regular',
-    opacity: 0.9,
   },
   bookStatValue: {
     fontSize: theme.typography.fontSizes.sm,
     fontWeight: theme.typography.fontWeights.bold as any,
     fontFamily: 'ZenKaku-Bold',
-    color: theme.colors.neutral.white,
   },
   bookStatDivider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: theme.colors.secondary[200],
   },
   modalOverlay: {
     flex: 1,

@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { AlertCircle, Plus } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AddItemModal from '../compornents/AddItemModal';
 import CategorySelectModal from '../compornents/CategorySelectModal';
 import ConfirmDialog from '../compornents/ConfirmDialog';
 import QuizBookCard from '../compornents/QuizBookCard';
@@ -15,7 +16,9 @@ export default function HomeScreen() {
   const deleteQuizBook = useQuizBookStore(state => state.deleteQuizBook);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [addItemModalVisible, setAddItemModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   const groupedQuizBooks = useMemo(() => {
     const groups: { [key: string]: any[] } = {};
@@ -34,6 +37,24 @@ export default function HomeScreen() {
   }, [quizBooks]);
 
   const handleAddQuiz = () => {
+    setAddItemModalVisible(true);
+  };
+
+  const handleAddCategory = () => {
+    setAddItemModalVisible(false);
+    setIsAddingCategory(true);
+    setCategoryModalVisible(true);
+  };
+
+  const handleAddQuizBook = () => {
+    if (existingCategories.length === 0) {
+      setAddItemModalVisible(false);
+      setIsAddingCategory(true);
+      setCategoryModalVisible(true);
+      return;
+    }
+    setAddItemModalVisible(false);
+    setIsAddingCategory(false);
     setCategoryModalVisible(true);
   };
 
@@ -51,6 +72,7 @@ export default function HomeScreen() {
     };
     await addQuizBook(newQuizBook);
     setCategoryModalVisible(false);
+    setIsAddingCategory(false);
   };
 
   const handleCardPress = (quizBookId: string) => {
@@ -120,11 +142,21 @@ export default function HomeScreen() {
         <Plus size={28} color={theme.colors.neutral.white as string} strokeWidth={2.5} />
       </TouchableOpacity>
 
+      <AddItemModal
+        visible={addItemModalVisible}
+        onAddCategory={handleAddCategory}
+        onAddQuizBook={handleAddQuizBook}
+        onClose={() => setAddItemModalVisible(false)}
+      />
+
       <CategorySelectModal
         visible={categoryModalVisible}
         categories={existingCategories}
         onSelect={handleCategorySelect}
-        onClose={() => setCategoryModalVisible(false)}
+        onClose={() => {
+          setCategoryModalVisible(false);
+          setIsAddingCategory(false);
+        }}
       />
 
       <ConfirmDialog
