@@ -2,7 +2,7 @@ import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { AlertTriangle, ArrowLeft, ChevronRight, Home, TrendingUp } from 'lucide-react-native';
+import { AlertTriangle, ArrowLeft, ChevronRight, TrendingUp } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -178,13 +178,7 @@ export default function QualificationDetailScreen() {
             <ArrowLeft size={24} color={theme.colors.secondary[900]} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{category}</Text>
-          <TouchableOpacity
-            style={styles.homeButton}
-            onPress={() => router.push('/')}
-            activeOpacity={0.7}
-          >
-            <Home size={24} color={theme.colors.secondary[900]} />
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView
@@ -270,11 +264,8 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  homeButton: {
+  headerSpacer: {
     width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   scrollView: {
     flex: 1,

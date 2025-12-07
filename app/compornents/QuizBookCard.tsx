@@ -83,27 +83,9 @@ const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizB
               </TouchableOpacity>
 
               <View style={styles.bookContent}>
-                <Text style={styles.bookTitle} numberOfLines={4}>
+                <Text style={styles.bookTitle} numberOfLines={6}>
                   {quizBook.title || '未設定'}
                 </Text>
-
-                <View style={styles.bookStats}>
-                  <View style={styles.bookStatItem}>
-                    <Text style={styles.bookStatLabel}>正答率</Text>
-                    <Text style={[styles.bookStatValue, {
-                      color: correctRate >= 80
-                        ? theme.colors.success[600]
-                        : correctRate >= 60
-                          ? theme.colors.warning[600]
-                          : theme.colors.error[600]
-                    }]}>{correctRate}%</Text>
-                  </View>
-                  <View style={styles.bookStatDivider} />
-                  <View style={styles.bookStatItem}>
-                    <Text style={styles.bookStatLabel}>周回</Text>
-                    <Text style={[styles.bookStatValue, { color: theme.colors.secondary[900] }]}>{quizBook.currentRound || 0}</Text>
-                  </View>
-                </View>
               </View>
             </View>
             <View style={styles.bookBottom} />
@@ -265,12 +247,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   bookTitle: {
-    fontSize: theme.typography.fontSizes.base,
+    fontSize: theme.typography.fontSizes.sm,
     fontWeight: theme.typography.fontWeights.bold as any,
     color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
   },
   bookStats: {
     backgroundColor: theme.colors.neutral[50],

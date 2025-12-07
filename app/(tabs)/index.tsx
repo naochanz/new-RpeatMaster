@@ -2,7 +2,7 @@ import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { AlertCircle, BookOpen, ChevronRight, Edit3, Target } from 'lucide-react-native';
+import { AlertCircle, BookOpen, ChevronDown, ChevronRight, ChevronUp, Edit3, Target } from 'lucide-react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Dimensions, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -23,6 +23,7 @@ export default function DashboardScreen() {
   const [goal, setGoal] = useState('');
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [tempGoal, setTempGoal] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadGoal();
@@ -96,6 +97,18 @@ export default function DashboardScreen() {
     });
   };
 
+  const toggleCategoryExpanded = (category: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
+
   const handleNavigateToLibrary = () => {
     router.push('/(tabs)/library');
   };
@@ -110,7 +123,9 @@ export default function DashboardScreen() {
     if (books.length === 0) return null;
 
     const maxRate = Math.max(...books.map(b => b.correctRate || 0), 100);
-    const barWidth = Math.max((CHART_WIDTH / books.length) - 8, 30);
+    const calculatedWidth = (CHART_WIDTH / books.length) - 8;
+    const maxBarWidth = CHART_WIDTH / 3;
+    const barWidth = Math.min(Math.max(calculatedWidth, 30), maxBarWidth);
 
     return (
       <View style={styles.chartContainer}>
@@ -183,34 +198,48 @@ export default function DashboardScreen() {
           </View>
         ) : (
           <View style={styles.qualificationList}>
-            {qualificationStats.map((qual) => (
-              <View key={qual.category} style={styles.qualificationCard}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardTitleContainer}>
-                    <Text style={styles.cardTitle}>{qual.category}</Text>
-                    <View style={styles.bookCountBadge}>
-                      <BookOpen size={14} color={theme.colors.primary[700]} />
-                      <Text style={styles.bookCountText}>{qual.totalBooks}</Text>
+            {qualificationStats.map((qual) => {
+              const isExpanded = expandedCategories.has(qual.category);
+              return (
+                <View key={qual.category} style={styles.qualificationCard}>
+                  <TouchableOpacity
+                    style={styles.cardHeader}
+                    onPress={() => toggleCategoryExpanded(qual.category)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.cardTitleContainer}>
+                      <Text style={styles.cardTitle}>{qual.category}</Text>
+                      <View style={styles.bookCountBadge}>
+                        <BookOpen size={14} color={theme.colors.primary[700]} />
+                        <Text style={styles.bookCountText}>{qual.totalBooks}</Text>
+                      </View>
                     </View>
-                  </View>
-                </View>
+                    {isExpanded ? (
+                      <ChevronUp size={24} color={theme.colors.secondary[600]} />
+                    ) : (
+                      <ChevronDown size={24} color={theme.colors.secondary[600]} />
+                    )}
+                  </TouchableOpacity>
 
-                <View style={styles.cardBody}>
-                  {renderBarChart(qual.books)}
+                  {isExpanded && (
+                    <View style={styles.cardBody}>
+                      {renderBarChart(qual.books)}
 
-                  <View style={styles.buttonRow}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleQualificationPress(qual.category)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.actionButtonText}>正答率遷移を確認</Text>
-                      <ChevronRight size={16} color={theme.colors.neutral.white} />
-                    </TouchableOpacity>
-                  </View>
+                      <View style={styles.buttonRow}>
+                        <TouchableOpacity
+                          style={styles.actionButton}
+                          onPress={() => handleQualificationPress(qual.category)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.actionButtonText}>正答率遷移を確認</Text>
+                          <ChevronRight size={16} color={theme.colors.neutral.white} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -409,6 +438,7 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
     marginBottom: 4,
+    textAlign: 'center',
   },
   bar: {
     width: '100%',
