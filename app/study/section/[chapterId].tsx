@@ -1,9 +1,10 @@
 import ConfirmDialog from '@/app/compornents/ConfirmDialog';
 import Card from '@/components/ui/Card';
+import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { AlertCircle, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, Edit, Home, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -144,6 +145,22 @@ const SectionList = () => {
                 </Text>
               </View>
             ),
+            headerLeft: () => (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{ marginLeft: 8 }}
+              >
+                <ArrowLeft size={24} color={theme.colors.secondary[900]} />
+              </TouchableOpacity>
+            ),
+            headerRight: () => (
+              <TouchableOpacity
+                onPress={() => router.push('/')}
+                style={{ marginRight: 8 }}
+              >
+                <Home size={24} color={theme.colors.secondary[900]} />
+              </TouchableOpacity>
+            ),
           }}
         />
         <SafeAreaView style={styles.wrapper}>
@@ -168,6 +185,7 @@ const SectionList = () => {
               </TouchableOpacity>
             </View>
           </View>
+          <CustomTabBar />
         </SafeAreaView>
       </>
     );
@@ -192,6 +210,22 @@ const SectionList = () => {
                 {`第${chapter.chapterNumber}章 ${chapter.title}`}
               </Text>
             </View>
+          ),
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ marginLeft: 8 }}
+            >
+              <ArrowLeft size={24} color={theme.colors.secondary[900]} />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/')}
+              style={{ marginRight: 8 }}
+            >
+              <Home size={24} color={theme.colors.secondary[900]} />
+            </TouchableOpacity>
           ),
         }}
       />
@@ -370,6 +404,8 @@ const SectionList = () => {
           onConfirm={confirmDelete}
           onCancel={() => setDeleteDialogVisible(false)}
         />
+
+        <CustomTabBar />
       </SafeAreaView>
     </>
   );

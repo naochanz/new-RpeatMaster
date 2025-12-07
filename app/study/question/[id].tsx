@@ -1,8 +1,9 @@
 import ConfirmDialog from '@/app/compornents/ConfirmDialog';
+import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
-import { Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { Plus, Trash2 } from 'lucide-react-native';
+import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { ArrowLeft, Home, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MemoModal from './compornent/MemoModal';
@@ -171,6 +172,22 @@ const QuestionList = () => {
                         <Text style={styles.questionCount}>
                             全{displayInfo.questionCount}問
                         </Text>
+                    ),
+                    headerLeft: () => (
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            style={{ marginLeft: 8 }}
+                        >
+                            <ArrowLeft size={24} color={theme.colors.secondary[900]} />
+                        </TouchableOpacity>
+                    ),
+                    headerRight: () => (
+                        <TouchableOpacity
+                            onPress={() => router.push('/')}
+                            style={{ marginRight: 8 }}
+                        >
+                            <Home size={24} color={theme.colors.secondary[900]} />
+                        </TouchableOpacity>
                     ),
                 }}
             />
@@ -353,6 +370,8 @@ const QuestionList = () => {
                     onCancel={() => setDeleteDialogVisible(false)}
                 />
                 </ScrollView>
+
+                <CustomTabBar />
             </SafeAreaView>
         </>
     )
