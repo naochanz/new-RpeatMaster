@@ -286,7 +286,6 @@ const SectionList = () => {
                 onChangeText={setNewSectionTitle}
                 placeholder="節名を入力（任意）"
                 placeholderTextColor={theme.colors.secondary[400]}
-                autoFocus
               />
               <View style={styles.modalActions}>
                 <TouchableOpacity

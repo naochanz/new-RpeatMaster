@@ -217,7 +217,6 @@ const StudyHome = () => {
                                 onChangeText={setNewChapterTitle}
                                 placeholder="章名を入力（任意）"
                                 placeholderTextColor={theme.colors.secondary[400]}
-                                autoFocus
                             />
                             <View style={styles.modalActions}>
                                 <TouchableOpacity

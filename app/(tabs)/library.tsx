@@ -8,6 +8,7 @@ import AddItemModal from '../compornents/AddItemModal';
 import CategorySelectModal from '../compornents/CategorySelectModal';
 import ConfirmDialog from '../compornents/ConfirmDialog';
 import QuizBookCard from '../compornents/QuizBookCard';
+import QuizBookTitleModal from '../compornents/QuizBookTitleModal';
 
 export default function LibraryScreen() {
   const quizBooks = useQuizBookStore(state => state.quizBooks);
@@ -18,6 +19,8 @@ export default function LibraryScreen() {
   const [addItemModalVisible, setAddItemModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [titleModalVisible, setTitleModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   const groupedQuizBooks = useMemo(() => {
     const groups: { [key: string]: any[] } = {};
@@ -58,10 +61,33 @@ export default function LibraryScreen() {
   };
 
   const handleCategorySelect = async (category: string) => {
+    if (isAddingCategory) {
+      const newQuizBook = {
+        id: `quiz-${Date.now()}`,
+        title: '',
+        category: category,
+        chapterCount: 0,
+        chapters: [],
+        currentRate: 0,
+        useSections: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await addQuizBook(newQuizBook);
+      setCategoryModalVisible(false);
+      setIsAddingCategory(false);
+    } else {
+      setSelectedCategory(category);
+      setCategoryModalVisible(false);
+      setTitleModalVisible(true);
+    }
+  };
+
+  const handleTitleConfirm = async (title: string) => {
     const newQuizBook = {
       id: `quiz-${Date.now()}`,
-      title: '',
-      category: category,
+      title: title,
+      category: selectedCategory,
       chapterCount: 0,
       chapters: [],
       currentRate: 0,
@@ -70,8 +96,13 @@ export default function LibraryScreen() {
       updatedAt: new Date(),
     };
     await addQuizBook(newQuizBook);
-    setCategoryModalVisible(false);
-    setIsAddingCategory(false);
+    setTitleModalVisible(false);
+    setSelectedCategory('');
+  };
+
+  const handleTitleCancel = () => {
+    setTitleModalVisible(false);
+    setSelectedCategory('');
   };
 
   const handleCardPress = (quizBookId: string) => {
@@ -153,6 +184,13 @@ export default function LibraryScreen() {
           setCategoryModalVisible(false);
           setIsAddingCategory(false);
         }}
+      />
+
+      <QuizBookTitleModal
+        visible={titleModalVisible}
+        categoryName={selectedCategory}
+        onConfirm={handleTitleConfirm}
+        onCancel={handleTitleCancel}
       />
 
       <ConfirmDialog

@@ -1,7 +1,7 @@
 import { theme } from '@/constants/theme';
 import { AlertTriangle } from 'lucide-react-native';
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -25,35 +25,37 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <View style={styles.overlay}>
-        <View style={styles.dialog}>
-          <View style={styles.iconContainer}>
-            <AlertTriangle
-              size={48}
-              style={{ color: theme.colors.error[600] }}
-            />
-          </View>
+      <SafeAreaView style={styles.overlay}>
+        <View style={styles.overlayContent}>
+          <View style={styles.dialog}>
+            <View style={styles.iconContainer}>
+              <AlertTriangle
+                size={48}
+                style={{ color: theme.colors.error[600] }}
+              />
+            </View>
 
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.message}>{message}</Text>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={onCancel}
-            >
-              <Text style={styles.cancelButtonText}>キャンセル</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={onCancel}
+              >
+                <Text style={styles.cancelButtonText}>キャンセル</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.button, styles.confirmButton]}
-              onPress={onConfirm}
-            >
-              <Text style={styles.confirmButtonText}>削除</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.confirmButton]}
+                onPress={onConfirm}
+              >
+                <Text style={styles.confirmButtonText}>削除</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -62,6 +64,9 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  overlayContent: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

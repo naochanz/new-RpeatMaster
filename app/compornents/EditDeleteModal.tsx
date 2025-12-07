@@ -1,7 +1,7 @@
 import { theme } from '@/constants/theme';
 import { Trash2 } from 'lucide-react-native';
 import React, { useState, useEffect } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface EditDeleteModalProps {
   visible: boolean;
@@ -51,51 +51,52 @@ const EditDeleteModal = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-          {title && <Text style={styles.modalTitle}>{title}</Text>}
+      <SafeAreaView style={styles.modalOverlay}>
+        <Pressable style={styles.modalOverlayPressable} onPress={onClose}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            {title && <Text style={styles.modalTitle}>{title}</Text>}
 
-          {showEditField && (
-            <View style={styles.editSection}>
-              <Text style={styles.editLabel}>{editLabel}</Text>
-              <TextInput
-                style={styles.editInput}
-                value={inputValue}
-                onChangeText={setInputValue}
-                placeholder={editPlaceholder}
-                placeholderTextColor={theme.colors.secondary[400]}
-                autoFocus
-              />
-            </View>
-          )}
-
-          <View style={styles.buttonSection}>
-            {showEditField && onSave && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.saveButton]}
-                onPress={handleSave}
-              >
-                <Text style={styles.saveButtonText}>保存</Text>
-              </TouchableOpacity>
+            {showEditField && (
+              <View style={styles.editSection}>
+                <Text style={styles.editLabel}>{editLabel}</Text>
+                <TextInput
+                  style={styles.editInput}
+                  value={inputValue}
+                  onChangeText={setInputValue}
+                  placeholder={editPlaceholder}
+                  placeholderTextColor={theme.colors.secondary[400]}
+                />
+              </View>
             )}
 
-            <TouchableOpacity
-              style={[styles.actionButton, styles.deleteButton]}
-              onPress={handleDelete}
-            >
-              <Trash2 size={20} color={theme.colors.neutral.white} />
-              <Text style={styles.deleteButtonText}>削除</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonSection}>
+              {showEditField && onSave && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.saveButton]}
+                  onPress={handleSave}
+                >
+                  <Text style={styles.saveButtonText}>保存</Text>
+                </TouchableOpacity>
+              )}
 
-            <TouchableOpacity
-              style={[styles.actionButton, styles.cancelButton]}
-              onPress={onClose}
-            >
-              <Text style={styles.cancelButtonText}>キャンセル</Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.deleteButton]}
+                onPress={handleDelete}
+              >
+                <Trash2 size={20} color={theme.colors.neutral.white} />
+                <Text style={styles.deleteButtonText}>削除</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton]}
+                onPress={onClose}
+              >
+                <Text style={styles.cancelButtonText}>キャンセル</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -104,6 +105,9 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalOverlayPressable: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: theme.spacing.lg,

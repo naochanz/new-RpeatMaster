@@ -264,7 +264,6 @@ export default function DashboardScreen() {
               placeholder="例: 簿記2級合格"
               multiline
               maxLength={100}
-              autoFocus
             />
 
             <View style={styles.modalButtons}>

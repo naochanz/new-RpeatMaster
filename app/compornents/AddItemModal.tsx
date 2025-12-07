@@ -4,6 +4,7 @@ import React from 'react';
 import {
   Modal,
   Pressable,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,48 +31,50 @@ const AddItemModal = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
-        <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>追加</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <X size={24} color={theme.colors.secondary[600]} />
-            </TouchableOpacity>
-          </View>
+      <SafeAreaView style={styles.modalOverlay}>
+        <Pressable style={styles.modalOverlayPressable} onPress={onClose}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>追加</Text>
+              <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <X size={24} color={theme.colors.secondary[600]} />
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.modalBody}>
-            <TouchableOpacity
-              style={styles.optionButton}
-              onPress={onAddCategory}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionIcon}>
-                <FolderPlus size={32} color={theme.colors.primary[600]} />
-              </View>
-              <View style={styles.optionContent}>
-                <Text style={styles.optionTitle}>資格を追加</Text>
-                <Text style={styles.optionDescription}>新しい資格カテゴリを作成します</Text>
-              </View>
-            </TouchableOpacity>
+            <View style={styles.modalBody}>
+              <TouchableOpacity
+                style={styles.optionButton}
+                onPress={onAddCategory}
+                activeOpacity={0.7}
+              >
+                <View style={styles.optionIcon}>
+                  <FolderPlus size={32} color={theme.colors.primary[600]} />
+                </View>
+                <View style={styles.optionContent}>
+                  <Text style={styles.optionTitle}>資格を追加</Text>
+                  <Text style={styles.optionDescription}>新しい資格カテゴリを作成します</Text>
+                </View>
+              </TouchableOpacity>
 
-            <View style={styles.divider} />
+              <View style={styles.divider} />
 
-            <TouchableOpacity
-              style={styles.optionButton}
-              onPress={onAddQuizBook}
-              activeOpacity={0.7}
-            >
-              <View style={styles.optionIcon}>
-                <BookOpen size={32} color={theme.colors.primary[600]} />
-              </View>
-              <View style={styles.optionContent}>
-                <Text style={styles.optionTitle}>問題集を追加</Text>
-                <Text style={styles.optionDescription}>既存の資格に問題集を追加します</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.optionButton}
+                onPress={onAddQuizBook}
+                activeOpacity={0.7}
+              >
+                <View style={styles.optionIcon}>
+                  <BookOpen size={32} color={theme.colors.primary[600]} />
+                </View>
+                <View style={styles.optionContent}>
+                  <Text style={styles.optionTitle}>問題集を追加</Text>
+                  <Text style={styles.optionDescription}>既存の資格に問題集を追加します</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -80,6 +83,9 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalOverlayPressable: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

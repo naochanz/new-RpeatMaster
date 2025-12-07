@@ -315,7 +315,6 @@ export default function QualificationDetailScreen() {
                 onChangeText={setEditedCategoryName}
                 placeholder="資格名を入力"
                 placeholderTextColor={theme.colors.secondary[400]}
-                autoFocus
               />
               <View style={styles.editModalActions}>
                 <TouchableOpacity
