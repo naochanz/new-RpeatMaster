@@ -9,6 +9,7 @@ export interface QuizBook {
   createdAt: Date;
   updatedAt: Date;
   useSections: boolean;
+  currentRound: number;
 }
 
 export interface Chapter {

@@ -92,7 +92,7 @@ export default function DashboardScreen() {
 
   const handleQualificationPress = (category: string) => {
     router.push({
-      pathname: '/dashboard/qualification/[category]',
+      pathname: '/dashboard/qualification/[category]' as any,
       params: { category },
     });
   };
@@ -110,7 +110,7 @@ export default function DashboardScreen() {
   };
 
   const handleNavigateToLibrary = () => {
-    router.push('/(tabs)/library');
+    router.push('/(tabs)/library' as any);
   };
 
   const getCorrectRateColor = (rate: number) => {

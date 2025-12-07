@@ -1,17 +1,16 @@
-import ConfirmDialog from '@/app/compornents/ConfirmDialog';
 import EditDeleteModal from '@/app/compornents/EditDeleteModal';
-import Card from '@/components/ui/Card';
 import CustomTabBar from '@/components/CustomTabBar';
+import Card from '@/components/ui/Card';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
-import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { AlertCircle, ArrowLeft, MoreVertical, Plus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const StudyHome = () => {
     const { id } = useLocalSearchParams();
-    
+
     // ✅ 修正: quizBooks を直接購読
     const quizBooks = useQuizBookStore(state => state.quizBooks);
     const fetchQuizBooks = useQuizBookStore(state => state.fetchQuizBooks);
@@ -120,7 +119,7 @@ const StudyHome = () => {
                     ),
                     headerLeft: () => (
                         <TouchableOpacity
-                            onPress={() => router.push('/(tabs)/library')}
+                            onPress={() => router.push('/(tabs)/library' as any)}
                             style={{ marginLeft: 8 }}
                         >
                             <ArrowLeft size={24} color={theme.colors.secondary[900]} />
