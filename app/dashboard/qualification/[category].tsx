@@ -3,9 +3,9 @@ import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { AlertTriangle, ArrowLeft, ChevronRight, MoreVertical, TrendingUp } from 'lucide-react-native';
+import { AlertTriangle, ArrowLeft, ChevronRight, Edit, MoreVertical, Trash2, TrendingUp } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - (theme.spacing.lg * 4);
@@ -15,7 +15,11 @@ export default function QualificationDetailScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const quizBooks = useQuizBookStore(state => state.quizBooks);
   const deleteQuizBook = useQuizBookStore(state => state.deleteQuizBook);
+  const updateQuizBook = useQuizBookStore(state => state.updateQuizBook);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editedCategoryName, setEditedCategoryName] = useState(category || '');
 
   const categoryBooks = useMemo(() => {
     return quizBooks
@@ -50,8 +54,32 @@ export default function QualificationDetailScreen() {
     });
   };
 
+  const handleMenuPress = () => {
+    setShowCategoryMenu(true);
+  };
+
+  const handleEditCategory = () => {
+    setShowCategoryMenu(false);
+    setEditedCategoryName(category || '');
+    setShowEditModal(true);
+  };
+
   const handleDeleteCategory = () => {
+    setShowCategoryMenu(false);
     setDeleteDialogVisible(true);
+  };
+
+  const confirmEditCategory = async () => {
+    if (editedCategoryName.trim() === '' || editedCategoryName === category) {
+      setShowEditModal(false);
+      return;
+    }
+
+    for (const book of categoryBooks) {
+      await updateQuizBook(book.id, { category: editedCategoryName.trim() });
+    }
+    setShowEditModal(false);
+    router.back();
   };
 
   const confirmDeleteCategory = async () => {
@@ -195,7 +223,7 @@ export default function QualificationDetailScreen() {
           <Text style={styles.headerTitle}>{category}</Text>
           <TouchableOpacity
             style={styles.menuButton}
-            onPress={handleDeleteCategory}
+            onPress={handleMenuPress}
             activeOpacity={0.7}
           >
             <MoreVertical size={24} color={theme.colors.secondary[900]} />
@@ -250,6 +278,62 @@ export default function QualificationDetailScreen() {
             </TouchableOpacity>
           )}
         </ScrollView>
+
+        <Modal
+          visible={showCategoryMenu}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowCategoryMenu(false)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setShowCategoryMenu(false)}>
+            <View style={styles.menuContent}>
+              <TouchableOpacity style={styles.menuItem} onPress={handleEditCategory}>
+                <Edit size={20} color={theme.colors.primary[600]} />
+                <Text style={styles.menuText}>編集</Text>
+              </TouchableOpacity>
+              <View style={styles.menuDivider} />
+              <TouchableOpacity style={styles.menuItem} onPress={handleDeleteCategory}>
+                <Trash2 size={20} color={theme.colors.error[600]} />
+                <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          visible={showEditModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowEditModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.editModalContent}>
+              <Text style={styles.editModalTitle}>資格名を編集</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editedCategoryName}
+                onChangeText={setEditedCategoryName}
+                placeholder="資格名を入力"
+                placeholderTextColor={theme.colors.secondary[400]}
+                autoFocus
+              />
+              <View style={styles.editModalActions}>
+                <TouchableOpacity
+                  style={[styles.editModalButton, styles.cancelButton]}
+                  onPress={() => setShowEditModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>キャンセル</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.editModalButton, styles.confirmButton]}
+                  onPress={confirmEditCategory}
+                >
+                  <Text style={styles.confirmButtonText}>保存</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         <ConfirmDialog
           visible={deleteDialogVisible}
@@ -442,5 +526,87 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.fontWeights.bold as any,
     color: theme.colors.neutral.white,
     fontFamily: 'ZenKaku-Bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  menuContent: {
+    backgroundColor: theme.colors.neutral.white,
+    borderRadius: theme.borderRadius.lg,
+    minWidth: 200,
+    ...theme.shadows.xl,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: theme.colors.secondary[200],
+    marginHorizontal: theme.spacing.md,
+  },
+  menuText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Medium',
+    color: theme.colors.secondary[900],
+  },
+  editModalContent: {
+    backgroundColor: theme.colors.neutral.white,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    minWidth: 300,
+    ...theme.shadows.xl,
+  },
+  editModalTitle: {
+    fontSize: theme.typography.fontSizes.lg,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.secondary[900],
+    marginBottom: theme.spacing.lg,
+    textAlign: 'center',
+  },
+  editInput: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Regular',
+    color: theme.colors.secondary[900],
+    borderWidth: 1,
+    borderColor: theme.colors.secondary[300],
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.neutral.white,
+    marginBottom: theme.spacing.lg,
+  },
+  editModalActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  editModalButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: theme.colors.secondary[100],
+  },
+  cancelButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.secondary[700],
+  },
+  confirmButton: {
+    backgroundColor: theme.colors.primary[600],
+  },
+  confirmButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.neutral.white,
   },
 });

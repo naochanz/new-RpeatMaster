@@ -5,7 +5,7 @@ import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { AlertCircle, ArrowLeft, Home, MoreVertical, Plus } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, MoreVertical, Plus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -22,10 +22,6 @@ const StudyHome = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [newChapterTitle, setNewChapterTitle] = useState('');
     const [editingChapter, setEditingChapter] = useState<any>(null);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [editedChapterTitle, setEditedChapterTitle] = useState('');
-    const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
-    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
     // ✅ 追加: 画面フォーカス時にデータを再取得
@@ -83,42 +79,28 @@ const StudyHome = () => {
         setShowAddModal(false);
     };
 
-    const handleSaveEdit = async () => {
-        if (editingChapter && editedChapterTitle.trim() !== '') {
-            await updateChapterInQuizBook(quizBook.id, editingChapter.id, {
-                title: editedChapterTitle
-            });
-            setShowEditModal(false);
-            setEditingChapter(null);
-        }
-    };
-
-    const confirmDelete = async () => {
-        if (deleteTargetId) {
-            await deleteChapterFromQuizBook(quizBook.id, deleteTargetId);
-            setDeleteDialogVisible(false);
-            setDeleteTargetId(null);
-        }
-    };
-
     const handleMenuPress = (chapter: any, e: any) => {
         e.stopPropagation();
         setEditingChapter(chapter);
-        setEditedChapterTitle(chapter.title);
         setActiveMenu(chapter.id);
     };
 
-    const handleMenuEdit = () => {
-        setShowEditModal(true);
+    const handleSaveChapter = async (newTitle: string) => {
+        if (editingChapter && newTitle.trim() !== '') {
+            await updateChapterInQuizBook(quizBook.id, editingChapter.id, {
+                title: newTitle.trim()
+            });
+        }
         setActiveMenu(null);
+        setEditingChapter(null);
     };
 
-    const handleMenuDelete = () => {
+    const handleDeleteChapter = async () => {
         if (editingChapter) {
-            setDeleteTargetId(editingChapter.id);
-            setDeleteDialogVisible(true);
-            setActiveMenu(null);
+            await deleteChapterFromQuizBook(quizBook.id, editingChapter.id);
         }
+        setActiveMenu(null);
+        setEditingChapter(null);
     };
 
     return (
@@ -142,14 +124,6 @@ const StudyHome = () => {
                             style={{ marginLeft: 8 }}
                         >
                             <ArrowLeft size={24} color={theme.colors.secondary[900]} />
-                        </TouchableOpacity>
-                    ),
-                    headerRight: () => (
-                        <TouchableOpacity
-                            onPress={() => router.push('/')}
-                            style={{ marginRight: 8 }}
-                        >
-                            <Home size={24} color={theme.colors.secondary[900]} />
                         </TouchableOpacity>
                     ),
                 }}
@@ -228,7 +202,6 @@ const StudyHome = () => {
                     </TouchableOpacity>
                 </ScrollView>
 
-                {/* モーダル部分は変更なし */}
                 <Modal
                     visible={showAddModal}
                     transparent
@@ -267,57 +240,18 @@ const StudyHome = () => {
                     </View>
                 </Modal>
 
-                <Modal
-                    visible={showEditModal}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setShowEditModal(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>章を編集</Text>
-                            <TextInput
-                                style={styles.input}
-                                value={editedChapterTitle}
-                                onChangeText={setEditedChapterTitle}
-                                placeholder="章名を入力"
-                                placeholderTextColor={theme.colors.secondary[400]}
-                                autoFocus
-                            />
-                            <View style={styles.modalActions}>
-                                <TouchableOpacity
-                                    style={[styles.modalButton, styles.cancelButton]}
-                                    onPress={() => {
-                                        setShowEditModal(false);
-                                        setEditingChapter(null);
-                                    }}
-                                >
-                                    <Text style={styles.cancelButtonText}>キャンセル</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.modalButton, styles.confirmButton]}
-                                    onPress={handleSaveEdit}
-                                >
-                                    <Text style={styles.confirmButtonText}>保存</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
-
                 <EditDeleteModal
-                    visible={!!activeMenu}
-                    onClose={() => setActiveMenu(null)}
-                    onEdit={handleMenuEdit}
-                    onDelete={handleMenuDelete}
-                />
-
-                <ConfirmDialog
-                    visible={deleteDialogVisible}
-                    title="章を削除"
-                    message="この章を削除してもよろしいですか?この操作は取り消せません。"
-                    onConfirm={confirmDelete}
-                    onCancel={() => setDeleteDialogVisible(false)}
+                    visible={!!activeMenu && !!editingChapter}
+                    onClose={() => {
+                        setActiveMenu(null);
+                        setEditingChapter(null);
+                    }}
+                    onSave={handleSaveChapter}
+                    onDelete={handleDeleteChapter}
+                    title="章の編集・削除"
+                    editLabel="章名"
+                    editValue={editingChapter?.title || ''}
+                    editPlaceholder="章名を入力"
                 />
 
                 <CustomTabBar />

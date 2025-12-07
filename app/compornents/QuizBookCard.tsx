@@ -126,7 +126,7 @@ const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizB
                   <ChevronDown size={20} color={theme.colors.secondary[600]} />
                 </TouchableOpacity>
                 {showCategoryDropdown && (
-                  <View style={styles.categoryDropdown}>
+                  <ScrollView style={styles.categoryDropdown} nestedScrollEnabled={true}>
                     {existingCategories.map((cat) => (
                       <TouchableOpacity
                         key={cat}
@@ -139,7 +139,7 @@ const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizB
                         <Text style={styles.categoryOptionText}>{cat}</Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 )}
               </View>
 
@@ -363,16 +363,16 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.secondary[300],
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.neutral.white,
-    maxHeight: 150,
+    maxHeight: 200,
     ...theme.shadows.md,
   },
   categoryOption: {
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.secondary[200],
   },
   categoryOptionText: {
-    fontSize: theme.typography.fontSizes.base,
+    fontSize: theme.typography.fontSizes.sm,
     fontFamily: 'ZenKaku-Regular',
     color: theme.colors.secondary[900],
   },

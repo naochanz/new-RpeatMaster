@@ -5,7 +5,7 @@ import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { AlertCircle, ArrowLeft, Home, MoreVertical, Plus } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, MoreVertical, Plus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -20,11 +20,7 @@ const SectionList = () => {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState('');
-  const [showEditModal, setShowEditModal] = useState(false);
   const [editingSection, setEditingSection] = useState<any>(null);
-  const [editedSectionTitle, setEditedSectionTitle] = useState('');
-  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
   useFocusEffect(
@@ -87,42 +83,28 @@ const SectionList = () => {
     setShowAddModal(false);
   };
 
-  const handleSaveEdit = async () => {
-    if (editingSection) {
-      await updateSectionInChapter(book.id, chapter.id, editingSection.id, {
-        title: editedSectionTitle.trim()
-      });
-      setShowEditModal(false);
-      setEditingSection(null);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (deleteTargetId) {
-      await deleteSectionFromChapter(book.id, chapter.id, deleteTargetId);
-      setDeleteDialogVisible(false);
-      setDeleteTargetId(null);
-    }
-  };
-
   const handleMenuPress = (section: any, e: any) => {
     e.stopPropagation();
     setEditingSection(section);
-    setEditedSectionTitle(section.title);
     setActiveMenu(section.id);
   };
 
-  const handleMenuEdit = () => {
-    setShowEditModal(true);
+  const handleSaveSection = async (newTitle: string) => {
+    if (editingSection && newTitle.trim() !== '') {
+      await updateSectionInChapter(book.id, chapter.id, editingSection.id, {
+        title: newTitle.trim()
+      });
+    }
     setActiveMenu(null);
+    setEditingSection(null);
   };
 
-  const handleMenuDelete = () => {
+  const handleDeleteSection = async () => {
     if (editingSection) {
-      setDeleteTargetId(editingSection.id);
-      setDeleteDialogVisible(true);
-      setActiveMenu(null);
+      await deleteSectionFromChapter(book.id, chapter.id, editingSection.id);
     }
+    setActiveMenu(null);
+    setEditingSection(null);
   };
 
   // 初回選択画面
@@ -156,14 +138,6 @@ const SectionList = () => {
                 style={{ marginLeft: 8 }}
               >
                 <ArrowLeft size={24} color={theme.colors.secondary[900]} />
-              </TouchableOpacity>
-            ),
-            headerRight: () => (
-              <TouchableOpacity
-                onPress={() => router.push('/')}
-                style={{ marginRight: 8 }}
-              >
-                <Home size={24} color={theme.colors.secondary[900]} />
               </TouchableOpacity>
             ),
           }}
@@ -225,14 +199,6 @@ const SectionList = () => {
               style={{ marginLeft: 8 }}
             >
               <ArrowLeft size={24} color={theme.colors.secondary[900]} />
-            </TouchableOpacity>
-          ),
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push('/')}
-              style={{ marginRight: 8 }}
-            >
-              <Home size={24} color={theme.colors.secondary[900]} />
             </TouchableOpacity>
           ),
         }}
@@ -343,57 +309,18 @@ const SectionList = () => {
           </View>
         </Modal>
 
-        <Modal
-          visible={showEditModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowEditModal(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>節を編集</Text>
-              <TextInput
-                style={styles.input}
-                value={editedSectionTitle}
-                onChangeText={setEditedSectionTitle}
-                placeholder="節名を入力（任意）"
-                placeholderTextColor={theme.colors.secondary[400]}
-                autoFocus
-              />
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => {
-                    setShowEditModal(false);
-                    setEditingSection(null);
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>キャンセル</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.confirmButton]}
-                  onPress={handleSaveEdit}
-                >
-                  <Text style={styles.confirmButtonText}>保存</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
         <EditDeleteModal
-          visible={!!activeMenu}
-          onClose={() => setActiveMenu(null)}
-          onEdit={handleMenuEdit}
-          onDelete={handleMenuDelete}
-        />
-
-        <ConfirmDialog
-          visible={deleteDialogVisible}
-          title="節を削除"
-          message="この節を削除してもよろしいですか？この操作は取り消せません。"
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteDialogVisible(false)}
+          visible={!!activeMenu && !!editingSection}
+          onClose={() => {
+            setActiveMenu(null);
+            setEditingSection(null);
+          }}
+          onSave={handleSaveSection}
+          onDelete={handleDeleteSection}
+          title="節の編集・削除"
+          editLabel="節名"
+          editValue={editingSection?.title || ''}
+          editPlaceholder="節名を入力（任意）"
         />
 
         <CustomTabBar />
