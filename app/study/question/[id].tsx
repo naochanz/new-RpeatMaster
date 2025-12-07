@@ -183,14 +183,6 @@ const QuestionList = () => {
                             <ArrowLeft size={24} color={theme.colors.secondary[900]} />
                         </TouchableOpacity>
                     ),
-                    headerRight: () => (
-                        <TouchableOpacity
-                            onPress={() => router.push('/')}
-                            style={{ marginRight: 8 }}
-                        >
-                            <Home size={24} color={theme.colors.secondary[900]} />
-                        </TouchableOpacity>
-                    ),
                 }}
             />
                 <ScrollView style={styles.container}>
