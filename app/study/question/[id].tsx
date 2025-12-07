@@ -166,7 +166,9 @@ const QuestionList = () => {
 
     return (
         <>
-            <Stack.Screen
+
+            <SafeAreaView style={styles.safeArea}>
+                          <Stack.Screen
                 options={{
                     headerTitle: () => (
                         <Text style={styles.questionCount}>
@@ -191,7 +193,6 @@ const QuestionList = () => {
                     ),
                 }}
             />
-            <SafeAreaView style={styles.safeArea}>
                 <ScrollView style={styles.container}>
                 <View>
                     {Array.from({ length: displayInfo.questionCount }, (_, i) => i + 1).map((num) => {
