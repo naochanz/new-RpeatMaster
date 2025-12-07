@@ -128,7 +128,8 @@ const SectionList = () => {
   if (book.useSections === undefined) {
     return (
       <>
-        <Stack.Screen
+        <SafeAreaView style={styles.wrapper}>
+                  <Stack.Screen
           options={{
             headerTitle: () => (
               <View style={{ maxWidth: 280 }}>
@@ -163,7 +164,6 @@ const SectionList = () => {
             ),
           }}
         />
-        <SafeAreaView style={styles.wrapper}>
           <View style={styles.selectionContainer}>
             <Text style={styles.selectionTitle}>節を使用しますか？</Text>
             <Text style={styles.selectionDescription}>
@@ -194,7 +194,6 @@ const SectionList = () => {
   // 節を使用する場合
   return (
     <>
-
       <SafeAreaView style={styles.wrapper}>
       <Stack.Screen
         options={{
