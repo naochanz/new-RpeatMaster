@@ -231,9 +231,6 @@ const SectionList = () => {
           ),
         }}
       />
-
-
-
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.scrollContent}
