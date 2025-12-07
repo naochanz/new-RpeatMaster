@@ -47,7 +47,7 @@ export default function BookDetailScreen() {
   }, [chapterStats]);
 
   const handleBack = () => {
-    router.back();
+    router.push('/(tabs)/library');
   };
 
   const handleStartStudy = () => {
