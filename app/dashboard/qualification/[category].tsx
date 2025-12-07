@@ -1,9 +1,10 @@
+import ConfirmDialog from '@/app/compornents/ConfirmDialog';
 import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { AlertTriangle, ArrowLeft, ChevronRight, TrendingUp } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import { AlertTriangle, ArrowLeft, ChevronRight, MoreVertical, TrendingUp } from 'lucide-react-native';
+import React, { useMemo, useState } from 'react';
 import { Dimensions, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -13,6 +14,8 @@ const CHART_HEIGHT = 200;
 export default function QualificationDetailScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
   const quizBooks = useQuizBookStore(state => state.quizBooks);
+  const deleteQuizBook = useQuizBookStore(state => state.deleteQuizBook);
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
 
   const categoryBooks = useMemo(() => {
     return quizBooks
@@ -45,6 +48,18 @@ export default function QualificationDetailScreen() {
       pathname: '/dashboard/qualification/weakness/[category]',
       params: { category },
     });
+  };
+
+  const handleDeleteCategory = () => {
+    setDeleteDialogVisible(true);
+  };
+
+  const confirmDeleteCategory = async () => {
+    for (const book of categoryBooks) {
+      await deleteQuizBook(book.id);
+    }
+    setDeleteDialogVisible(false);
+    router.back();
   };
 
   const renderLineChart = () => {
@@ -178,7 +193,13 @@ export default function QualificationDetailScreen() {
             <ArrowLeft size={24} color={theme.colors.secondary[900]} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{category}</Text>
-          <View style={styles.headerSpacer} />
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={handleDeleteCategory}
+            activeOpacity={0.7}
+          >
+            <MoreVertical size={24} color={theme.colors.secondary[900]} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -229,6 +250,15 @@ export default function QualificationDetailScreen() {
             </TouchableOpacity>
           )}
         </ScrollView>
+
+        <ConfirmDialog
+          visible={deleteDialogVisible}
+          title="資格グループを削除"
+          message={`「${category}」の資格グループとその中の全ての問題集を削除してもよろしいですか？この操作は取り消せません。`}
+          onConfirm={confirmDeleteCategory}
+          onCancel={() => setDeleteDialogVisible(false)}
+        />
+
         <CustomTabBar />
       </SafeAreaView>
     </>
@@ -264,8 +294,11 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
-  headerSpacer: {
+  menuButton: {
     width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
   scrollView: {
     flex: 1,

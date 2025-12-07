@@ -1,10 +1,11 @@
 import ConfirmDialog from '@/app/compornents/ConfirmDialog';
+import EditDeleteModal from '@/app/compornents/EditDeleteModal';
 import Card from '@/components/ui/Card';
 import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { AlertCircle, ArrowLeft, Edit, Home, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, Home, MoreVertical, Plus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -86,14 +87,6 @@ const SectionList = () => {
     setShowAddModal(false);
   };
 
-  const handleEditSection = (section: any, e: any) => {
-    e.stopPropagation();
-    setEditingSection(section);
-    setEditedSectionTitle(section.title);
-    setShowEditModal(true);
-    setActiveMenu(null);
-  };
-
   const handleSaveEdit = async () => {
     if (editingSection) {
       await updateSectionInChapter(book.id, chapter.id, editingSection.id, {
@@ -104,13 +97,6 @@ const SectionList = () => {
     }
   };
 
-  const handleDeleteSection = (sectionId: string, e: any) => {
-    e.stopPropagation();
-    setDeleteTargetId(sectionId);
-    setDeleteDialogVisible(true);
-    setActiveMenu(null);
-  };
-
   const confirmDelete = async () => {
     if (deleteTargetId) {
       await deleteSectionFromChapter(book.id, chapter.id, deleteTargetId);
@@ -119,9 +105,24 @@ const SectionList = () => {
     }
   };
 
-  const toggleMenu = (sectionId: string, e: any) => {
+  const handleMenuPress = (section: any, e: any) => {
     e.stopPropagation();
-    setActiveMenu(activeMenu === sectionId ? null : sectionId);
+    setEditingSection(section);
+    setEditedSectionTitle(section.title);
+    setActiveMenu(section.id);
+  };
+
+  const handleMenuEdit = () => {
+    setShowEditModal(true);
+    setActiveMenu(null);
+  };
+
+  const handleMenuDelete = () => {
+    if (editingSection) {
+      setDeleteTargetId(editingSection.id);
+      setDeleteDialogVisible(true);
+      setActiveMenu(null);
+    }
   };
 
   // 初回選択画面
@@ -148,7 +149,10 @@ const SectionList = () => {
             ),
             headerLeft: () => (
               <TouchableOpacity
-                onPress={() => router.push('/(tabs)/library')}
+                onPress={() => router.push({
+                  pathname: '/study/[id]',
+                  params: { id: book.id }
+                })}
                 style={{ marginLeft: 8 }}
               >
                 <ArrowLeft size={24} color={theme.colors.secondary[900]} />
@@ -214,7 +218,10 @@ const SectionList = () => {
           ),
           headerLeft: () => (
             <TouchableOpacity
-              onPress={() => router.push('/(tabs)/library')}
+              onPress={() => router.push({
+                pathname: '/study/[id]',
+                params: { id: book.id }
+              })}
               style={{ marginLeft: 8 }}
             >
               <ArrowLeft size={24} color={theme.colors.secondary[900]} />
@@ -260,7 +267,7 @@ const SectionList = () => {
                   <Card style={styles.sectionCard}>
                     <TouchableOpacity
                       style={styles.menuButton}
-                      onPress={(e) => toggleMenu(section.id, e)}
+                      onPress={(e) => handleMenuPress(section, e)}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                       <MoreVertical size={20} color={theme.colors.secondary[600]} />
@@ -283,26 +290,6 @@ const SectionList = () => {
                     </View>
                   </Card>
                 </TouchableOpacity>
-
-                {activeMenu === section.id && (
-                  <View style={styles.menu}>
-                    <TouchableOpacity
-                      style={styles.menuItem}
-                      onPress={(e) => handleEditSection(section, e)}
-                    >
-                      <Edit size={16} color={theme.colors.primary[600]} />
-                      <Text style={styles.menuText}>編集</Text>
-                    </TouchableOpacity>
-                    <View style={styles.menuDivider} />
-                    <TouchableOpacity
-                      style={styles.menuItem}
-                      onPress={(e) => handleDeleteSection(section.id, e)}
-                    >
-                      <Trash2 size={16} color={theme.colors.error[600]} />
-                      <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
             ))
           )}
@@ -393,6 +380,13 @@ const SectionList = () => {
             </View>
           </View>
         </Modal>
+
+        <EditDeleteModal
+          visible={!!activeMenu}
+          onClose={() => setActiveMenu(null)}
+          onEdit={handleMenuEdit}
+          onDelete={handleMenuDelete}
+        />
 
         <ConfirmDialog
           visible={deleteDialogVisible}

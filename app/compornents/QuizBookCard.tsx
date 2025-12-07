@@ -86,6 +86,15 @@ const QuizBookCard = ({ quizBook, onPress, onDelete, existingCategories }: QuizB
                 <Text style={styles.bookTitle} numberOfLines={6}>
                   {quizBook.title || '未設定'}
                 </Text>
+
+                <View style={styles.bookStats}>
+                  <View style={styles.bookStatItem}>
+                    <Text style={styles.bookStatLabel}>周回数</Text>
+                    <Text style={[styles.bookStatValue, { color: theme.colors.primary[600] }]}>
+                      {quizBook.currentRound || 0}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
             <View style={styles.bookBottom} />

@@ -1,10 +1,11 @@
 import ConfirmDialog from '@/app/compornents/ConfirmDialog';
+import EditDeleteModal from '@/app/compornents/EditDeleteModal';
 import Card from '@/components/ui/Card';
 import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { AlertCircle, ArrowLeft, Edit, Home, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, Home, MoreVertical, Plus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -82,14 +83,6 @@ const StudyHome = () => {
         setShowAddModal(false);
     };
 
-    const handleEditChapter = (chapter: any, e: any) => {
-        e.stopPropagation();
-        setEditingChapter(chapter);
-        setEditedChapterTitle(chapter.title);
-        setShowEditModal(true);
-        setActiveMenu(null);
-    };
-
     const handleSaveEdit = async () => {
         if (editingChapter && editedChapterTitle.trim() !== '') {
             await updateChapterInQuizBook(quizBook.id, editingChapter.id, {
@@ -100,13 +93,6 @@ const StudyHome = () => {
         }
     };
 
-    const handleDeleteChapter = (chapterId: string, e: any) => {
-        e.stopPropagation();
-        setDeleteTargetId(chapterId);
-        setDeleteDialogVisible(true);
-        setActiveMenu(null);
-    };
-
     const confirmDelete = async () => {
         if (deleteTargetId) {
             await deleteChapterFromQuizBook(quizBook.id, deleteTargetId);
@@ -115,9 +101,24 @@ const StudyHome = () => {
         }
     };
 
-    const toggleMenu = (chapterId: string, e: any) => {
+    const handleMenuPress = (chapter: any, e: any) => {
         e.stopPropagation();
-        setActiveMenu(activeMenu === chapterId ? null : chapterId);
+        setEditingChapter(chapter);
+        setEditedChapterTitle(chapter.title);
+        setActiveMenu(chapter.id);
+    };
+
+    const handleMenuEdit = () => {
+        setShowEditModal(true);
+        setActiveMenu(null);
+    };
+
+    const handleMenuDelete = () => {
+        if (editingChapter) {
+            setDeleteTargetId(editingChapter.id);
+            setDeleteDialogVisible(true);
+            setActiveMenu(null);
+        }
     };
 
     return (
@@ -177,7 +178,7 @@ const StudyHome = () => {
                                     <Card style={styles.chapterCard}>
                                         <TouchableOpacity
                                             style={styles.menuButton}
-                                            onPress={(e) => toggleMenu(chapter.id, e)}
+                                            onPress={(e) => handleMenuPress(chapter, e)}
                                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                         >
                                             {/* @ts-ignore */}
@@ -212,28 +213,6 @@ const StudyHome = () => {
                                         </View>
                                     </Card>
                                 </TouchableOpacity>
-
-                                {activeMenu === chapter.id && (
-                                    <View style={styles.menu}>
-                                        <TouchableOpacity
-                                            style={styles.menuItem}
-                                            onPress={(e) => handleEditChapter(chapter, e)}
-                                        >
-                                            {/* @ts-ignore */}
-                                            <Edit size={16} color={theme.colors.primary[600]} />
-                                            <Text style={styles.menuText}>編集</Text>
-                                        </TouchableOpacity>
-                                        <View style={styles.menuDivider} />
-                                        <TouchableOpacity
-                                            style={styles.menuItem}
-                                            onPress={(e) => handleDeleteChapter(chapter.id, e)}
-                                        >
-                                            {/* @ts-ignore */}
-                                            <Trash2 size={16} color={theme.colors.error[600]} />
-                                            <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
                             </View>
                         ))
                     )}
@@ -325,6 +304,13 @@ const StudyHome = () => {
                         </View>
                     </View>
                 </Modal>
+
+                <EditDeleteModal
+                    visible={!!activeMenu}
+                    onClose={() => setActiveMenu(null)}
+                    onEdit={handleMenuEdit}
+                    onDelete={handleMenuDelete}
+                />
 
                 <ConfirmDialog
                     visible={deleteDialogVisible}
