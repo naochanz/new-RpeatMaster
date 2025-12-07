@@ -1,7 +1,8 @@
+import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { AlertTriangle, ArrowLeft, CheckCircle2, TrendingDown, TrendingUp } from 'lucide-react-native';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Home, TrendingDown, TrendingUp } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -92,7 +93,13 @@ export default function BookDetailScreen() {
             <Text style={styles.headerCategory}>{book.category}</Text>
             <Text style={styles.headerTitle} numberOfLines={1}>{book.title}</Text>
           </View>
-          <View style={styles.headerSpacer} />
+          <TouchableOpacity
+            style={styles.homeButton}
+            onPress={() => router.push('/')}
+            activeOpacity={0.7}
+          >
+            <Home size={24} color={theme.colors.secondary[900]} />
+          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -270,6 +277,7 @@ export default function BookDetailScreen() {
             </View>
           )}
         </ScrollView>
+        <CustomTabBar />
       </SafeAreaView>
     </>
   );
@@ -313,8 +321,11 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
   },
-  headerSpacer: {
+  homeButton: {
     width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,
