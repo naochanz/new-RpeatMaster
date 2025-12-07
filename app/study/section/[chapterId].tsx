@@ -5,7 +5,7 @@ import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { AlertCircle, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const SectionList = () => {
   const { chapterId } = useLocalSearchParams();
@@ -146,7 +146,7 @@ const SectionList = () => {
             ),
           }}
         />
-        <View style={styles.wrapper}>
+        <SafeAreaView style={styles.wrapper}>
           <View style={styles.selectionContainer}>
             <Text style={styles.selectionTitle}>節を使用しますか？</Text>
             <Text style={styles.selectionDescription}>
@@ -168,7 +168,7 @@ const SectionList = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </SafeAreaView>
       </>
     );
   }
@@ -198,7 +198,7 @@ const SectionList = () => {
 
 
 
-      <View style={styles.wrapper}>
+      <SafeAreaView style={styles.wrapper}>
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.scrollContent}
@@ -370,7 +370,7 @@ const SectionList = () => {
           onConfirm={confirmDelete}
           onCancel={() => setDeleteDialogVisible(false)}
         />
-      </View>
+      </SafeAreaView>
     </>
   );
 };

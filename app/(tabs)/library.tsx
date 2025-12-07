@@ -75,7 +75,7 @@ export default function LibraryScreen() {
   };
 
   const handleCardPress = (quizBookId: string) => {
-    router.push(`/dashboard/book/${quizBookId}` as any);
+    router.push(`/study/${quizBookId}` as any);
   };
 
   const handleDelete = async (quizBookId: string) => {

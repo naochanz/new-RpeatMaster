@@ -4,7 +4,7 @@ import { useQuizBookStore } from '@/stores/quizBookStore';
 import { Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MemoModal from './compornent/MemoModal';
 
 const QuestionList = () => {
@@ -174,7 +174,8 @@ const QuestionList = () => {
                     ),
                 }}
             />
-            <ScrollView style={styles.container}>
+            <SafeAreaView style={styles.safeArea}>
+                <ScrollView style={styles.container}>
                 <View>
                     {Array.from({ length: displayInfo.questionCount }, (_, i) => i + 1).map((num) => {
                         const questionData = getQuestionAnswers(chapterId, sectionId, num);
@@ -351,15 +352,19 @@ const QuestionList = () => {
                     onConfirm={confirmDelete}
                     onCancel={() => setDeleteDialogVisible(false)}
                 />
-            </ScrollView >
+                </ScrollView>
+            </SafeAreaView>
         </>
     )
 }
 
 const styles = StyleSheet.create({
-    container: {
+    safeArea: {
         flex: 1,
         backgroundColor: theme.colors.neutral[50],
+    },
+    container: {
+        flex: 1,
     },
     titleContainer: {
         backgroundColor: theme.colors.neutral.white,

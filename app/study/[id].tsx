@@ -5,7 +5,7 @@ import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { AlertCircle, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const StudyHome = () => {
     const { id } = useLocalSearchParams();
@@ -137,7 +137,7 @@ const StudyHome = () => {
                 }}
             />
 
-            <View style={styles.wrapper}>
+            <SafeAreaView style={styles.wrapper}>
                 <ScrollView
                     style={styles.container}
                     contentContainerStyle={styles.scrollContent}
@@ -316,7 +316,7 @@ const StudyHome = () => {
                     onConfirm={confirmDelete}
                     onCancel={() => setDeleteDialogVisible(false)}
                 />
-            </View>
+            </SafeAreaView>
         </>
     )
 }

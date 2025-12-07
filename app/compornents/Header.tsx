@@ -8,9 +8,11 @@ const Header = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.appTitle}>RepeatMaster</Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.appTitle} numberOfLines={1}>RepeatMaster</Text>
+        </View>
         <TouchableOpacity style={styles.settingsButton}>
-          <Settings size={24} color={theme.colors.secondary[700]} />
+          <Settings size={20} color={theme.colors.secondary[700]} />
         </TouchableOpacity>
       </View>
     </View>
@@ -33,8 +35,12 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.secondary[200],
     ...theme.shadows.sm,
   },
+  titleContainer: {
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
   appTitle: {
-    fontSize: theme.typography.fontSizes.xl,
+    fontSize: theme.typography.fontSizes.lg,
     fontWeight: theme.typography.fontWeights.bold,
     color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
@@ -43,6 +49,7 @@ const styles = StyleSheet.create({
   settingsButton: {
     padding: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
+    flexShrink: 0,
   },
 });
 
