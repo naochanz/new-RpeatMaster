@@ -1,9 +1,14 @@
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { AlertCircle, BookOpen, ChevronRight } from 'lucide-react-native';
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AlertCircle, BookOpen, ChevronRight, Edit3, Target } from 'lucide-react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Dimensions, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CHART_WIDTH = SCREEN_WIDTH - (theme.spacing.lg * 4);
+const MAX_BAR_HEIGHT = 120;
 
 interface QualificationStats {
   category: string;
@@ -15,6 +20,43 @@ interface QualificationStats {
 
 export default function DashboardScreen() {
   const quizBooks = useQuizBookStore(state => state.quizBooks);
+  const [goal, setGoal] = useState('');
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [tempGoal, setTempGoal] = useState('');
+
+  useEffect(() => {
+    loadGoal();
+  }, []);
+
+  const loadGoal = async () => {
+    try {
+      const savedGoal = await AsyncStorage.getItem('userGoal');
+      if (savedGoal) {
+        setGoal(savedGoal);
+      }
+    } catch (error) {
+      console.error('Failed to load goal:', error);
+    }
+  };
+
+  const saveGoal = async (newGoal: string) => {
+    try {
+      await AsyncStorage.setItem('userGoal', newGoal);
+      setGoal(newGoal);
+    } catch (error) {
+      console.error('Failed to save goal:', error);
+    }
+  };
+
+  const handleEditGoal = () => {
+    setTempGoal(goal);
+    setIsEditingGoal(true);
+  };
+
+  const handleSaveGoal = () => {
+    saveGoal(tempGoal);
+    setIsEditingGoal(false);
+  };
 
   const qualificationStats = useMemo(() => {
     const statsMap: { [key: string]: QualificationStats } = {};
@@ -64,19 +106,66 @@ export default function DashboardScreen() {
     return theme.colors.error[600];
   };
 
-  const getCorrectRateBackground = (rate: number) => {
-    if (rate >= 80) return theme.colors.success[50];
-    if (rate >= 60) return theme.colors.warning[50];
-    return theme.colors.error[50];
+  const renderBarChart = (books: any[]) => {
+    if (books.length === 0) return null;
+
+    const maxRate = Math.max(...books.map(b => b.correctRate || 0), 100);
+    const barWidth = Math.max((CHART_WIDTH / books.length) - 8, 30);
+
+    return (
+      <View style={styles.chartContainer}>
+        <View style={styles.chartBars}>
+          {books.map((book, index) => {
+            const rate = book.correctRate || 0;
+            const barHeight = (rate / maxRate) * MAX_BAR_HEIGHT;
+
+            return (
+              <View key={book.id} style={[styles.barContainer, { width: barWidth }]}>
+                <Text style={styles.barValue}>{rate}%</Text>
+                <View
+                  style={[
+                    styles.bar,
+                    {
+                      height: Math.max(barHeight, 10),
+                      backgroundColor: getCorrectRateColor(rate),
+                    }
+                  ]}
+                />
+                <Text style={styles.barLabel} numberOfLines={1}>
+                  {book.title?.substring(0, 6) || `問${index + 1}`}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        <TouchableOpacity
+          style={styles.goalCard}
+          onPress={handleEditGoal}
+          activeOpacity={0.7}
+        >
+          <View style={styles.goalHeader}>
+            <View style={styles.goalTitleContainer}>
+              <Target size={24} color={theme.colors.primary[600]} />
+              <Text style={styles.goalTitle}>目標</Text>
+            </View>
+            <Edit3 size={20} color={theme.colors.secondary[400]} />
+          </View>
+          <Text style={styles.goalText}>
+            {goal || '目標を設定してください'}
+          </Text>
+        </TouchableOpacity>
+
         {qualificationStats.length === 0 ? (
           <View style={styles.emptyState}>
             <AlertCircle size={64} color={theme.colors.primary[300]} />
@@ -95,54 +184,80 @@ export default function DashboardScreen() {
         ) : (
           <View style={styles.qualificationList}>
             {qualificationStats.map((qual) => (
-              <TouchableOpacity
-                key={qual.category}
-                style={styles.qualificationCard}
-                onPress={() => handleQualificationPress(qual.category)}
-                activeOpacity={0.7}
-              >
+              <View key={qual.category} style={styles.qualificationCard}>
                 <View style={styles.cardHeader}>
                   <View style={styles.cardTitleContainer}>
                     <Text style={styles.cardTitle}>{qual.category}</Text>
                     <View style={styles.bookCountBadge}>
-                      <BookOpen size={14} color={theme.colors.primary[600]} />
+                      <BookOpen size={14} color={theme.colors.primary[700]} />
                       <Text style={styles.bookCountText}>{qual.totalBooks}</Text>
                     </View>
                   </View>
-                  <ChevronRight size={20} color={theme.colors.secondary[400]} />
                 </View>
 
                 <View style={styles.cardBody}>
-                  <View style={styles.statRow}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>平均正答率</Text>
-                      <View style={[
-                        styles.correctRateBadge,
-                        { backgroundColor: getCorrectRateBackground(qual.avgCorrectRate) }
-                      ]}>
-                        <Text style={[
-                          styles.correctRateValue,
-                          { color: getCorrectRateColor(qual.avgCorrectRate) }
-                        ]}>
-                          {qual.avgCorrectRate}%
-                        </Text>
-                      </View>
-                    </View>
+                  {renderBarChart(qual.books)}
 
-                    <View style={styles.statDivider} />
-
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>総周回数</Text>
-                      <Text style={styles.roundValue}>{qual.totalRounds}</Text>
-                    </View>
+                  <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => handleQualificationPress(qual.category)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.actionButtonText}>正答率遷移を確認</Text>
+                      <ChevronRight size={16} color={theme.colors.neutral.white} />
+                    </TouchableOpacity>
                   </View>
                 </View>
-              </TouchableOpacity>
+              </View>
             ))}
           </View>
         )}
       </ScrollView>
-    </View>
+
+      <Modal
+        visible={isEditingGoal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsEditingGoal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Target size={24} color={theme.colors.primary[600]} />
+              <Text style={styles.modalTitle}>目標を設定</Text>
+            </View>
+
+            <TextInput
+              style={styles.modalInput}
+              value={tempGoal}
+              onChangeText={setTempGoal}
+              placeholder="例: 簿記2級合格"
+              multiline
+              maxLength={100}
+              autoFocus
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setIsEditingGoal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.cancelButtonText}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={handleSaveGoal}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.saveButtonText}>保存</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
@@ -156,7 +271,38 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: theme.spacing.lg,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.md,
+  },
+  goalCard: {
+    backgroundColor: theme.colors.primary[600],
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.lg,
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  goalTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  goalTitle: {
+    fontSize: theme.typography.fontSizes.base,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.neutral.white,
+    fontFamily: 'ZenKaku-Bold',
+  },
+  goalText: {
+    fontSize: theme.typography.fontSizes.lg,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.neutral.white,
+    fontFamily: 'ZenKaku-Bold',
+    minHeight: 28,
   },
   emptyState: {
     flex: 1,
@@ -194,13 +340,11 @@ const styles = StyleSheet.create({
     fontFamily: 'ZenKaku-Bold',
   },
   qualificationList: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.lg,
   },
   qualificationCard: {
     backgroundColor: theme.colors.neutral.white,
     borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.primary[200],
     overflow: 'hidden',
     ...theme.shadows.md,
   },
@@ -220,7 +364,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    fontSize: theme.typography.fontSizes.lg,
+    fontSize: theme.typography.fontSizes.xl,
     fontWeight: theme.typography.fontWeights.bold as any,
     color: theme.colors.secondary[900],
     fontFamily: 'ZenKaku-Bold',
@@ -245,42 +389,125 @@ const styles = StyleSheet.create({
   cardBody: {
     padding: theme.spacing.lg,
   },
-  statRow: {
+  chartContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  chartBars: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: theme.spacing.md,
   },
-  statItem: {
-    flex: 1,
+  barContainer: {
     alignItems: 'center',
+    gap: 4,
   },
-  statLabel: {
-    fontSize: theme.typography.fontSizes.sm,
+  barValue: {
+    fontSize: theme.typography.fontSizes.xs,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.secondary[900],
+    fontFamily: 'ZenKaku-Bold',
+    marginBottom: 4,
+  },
+  bar: {
+    width: '100%',
+    borderTopLeftRadius: theme.borderRadius.sm,
+    borderTopRightRadius: theme.borderRadius.sm,
+    minHeight: 10,
+  },
+  barLabel: {
+    fontSize: theme.typography.fontSizes.xs,
     color: theme.colors.secondary[600],
     fontFamily: 'ZenKaku-Regular',
-    marginBottom: theme.spacing.sm,
+    marginTop: 4,
+    textAlign: 'center',
   },
-  correctRateBadge: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    minWidth: 80,
+  buttonRow: {
+    gap: theme.spacing.sm,
+  },
+  actionButton: {
+    backgroundColor: theme.colors.primary[600],
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.sm,
   },
-  correctRateValue: {
-    fontSize: theme.typography.fontSizes.xl,
+  actionButtonText: {
+    fontSize: theme.typography.fontSizes.base,
     fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.neutral.white,
     fontFamily: 'ZenKaku-Bold',
   },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: theme.colors.secondary[200],
-    marginHorizontal: theme.spacing.md,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
   },
-  roundValue: {
+  modalContent: {
+    backgroundColor: theme.colors.neutral.white,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.xl,
+    width: '100%',
+    maxWidth: 400,
+    ...theme.shadows.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
+  },
+  modalTitle: {
     fontSize: theme.typography.fontSizes.xl,
     fontWeight: theme.typography.fontWeights.bold as any,
     color: theme.colors.secondary[900],
+    fontFamily: 'ZenKaku-Bold',
+  },
+  modalInput: {
+    backgroundColor: theme.colors.neutral[50],
+    borderWidth: 2,
+    borderColor: theme.colors.primary[200],
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Regular',
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: theme.spacing.lg,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: theme.colors.secondary[100],
+  },
+  cancelButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.secondary[700],
+    fontFamily: 'ZenKaku-Bold',
+  },
+  saveButton: {
+    backgroundColor: theme.colors.primary[600],
+    ...theme.shadows.sm,
+  },
+  saveButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    color: theme.colors.neutral.white,
     fontFamily: 'ZenKaku-Bold',
   },
 });

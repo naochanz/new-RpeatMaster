@@ -3,7 +3,7 @@ import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router } from 'expo-router';
 import { AlertCircle, Plus } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import AddItemModal from '../compornents/AddItemModal';
 import CategorySelectModal from '../compornents/CategorySelectModal';
 import ConfirmDialog from '../compornents/ConfirmDialog';
@@ -95,7 +95,7 @@ export default function LibraryScreen() {
   };
 
   return (
-    <View style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.sectionContainer}>
         <Text style={styles.sectionTitle}>登録済み問題集</Text>
       </View>
@@ -165,7 +165,7 @@ export default function LibraryScreen() {
         onConfirm={confirmDelete}
         onCancel={() => setDeleteDialogVisible(false)}
       />
-    </View>
+    </SafeAreaView>
   )
 }
 
