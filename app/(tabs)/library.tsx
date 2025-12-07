@@ -75,10 +75,7 @@ export default function LibraryScreen() {
   };
 
   const handleCardPress = (quizBookId: string) => {
-    router.push({
-      pathname: '/study/[id]',
-      params: { id: quizBookId },
-    });
+    router.push(`/dashboard/book/${quizBookId}` as any);
   };
 
   const handleDelete = async (quizBookId: string) => {
@@ -166,7 +163,7 @@ export default function LibraryScreen() {
         onCancel={() => setDeleteDialogVisible(false)}
       />
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
