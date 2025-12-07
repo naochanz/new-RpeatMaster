@@ -4,12 +4,17 @@ import Card from '@/components/ui/Card';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { AlertCircle, ArrowLeft, MoreVertical, Plus } from 'lucide-react-native';
+import { AlertCircle, MoreVertical, Plus, ArrowLeft } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from 'expo-router';
+
+
 
 const StudyHome = () => {
+    const navigation = useNavigation();
     const { id } = useLocalSearchParams();
+    console.log('Can go back:', navigation.canGoBack());
 
     // ✅ 修正: quizBooks を直接購読
     const quizBooks = useQuizBookStore(state => state.quizBooks);
@@ -102,6 +107,7 @@ const StudyHome = () => {
         setEditingChapter(null);
     };
 
+
     return (
         <>
             <Stack.Screen
@@ -119,12 +125,14 @@ const StudyHome = () => {
                     ),
                     headerLeft: () => (
                         <TouchableOpacity
-                            onPress={() => router.push('/(tabs)/library' as any)}
+                            onPress={() => router.back()}
                             style={{ marginLeft: 8 }}
                         >
+                            {/* @ts-ignore */}
                             <ArrowLeft size={24} color={theme.colors.secondary[900]} />
                         </TouchableOpacity>
                     ),
+                    gestureEnabled: false,
                 }}
             />
 

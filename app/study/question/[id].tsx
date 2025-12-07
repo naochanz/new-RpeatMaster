@@ -2,15 +2,15 @@ import ConfirmDialog from '@/app/compornents/ConfirmDialog';
 import CustomTabBar from '@/components/CustomTabBar';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
-import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { ArrowLeft, Home, Plus, Trash2 } from 'lucide-react-native';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MemoModal from './compornent/MemoModal';
 
 const QuestionList = () => {
     const { id } = useLocalSearchParams();
-    
+
     // ✅ quizBooks を直接購読
     const quizBooks = useQuizBookStore(state => state.quizBooks);
     const fetchQuizBooks = useQuizBookStore(state => state.fetchQuizBooks);
@@ -166,202 +166,202 @@ const QuestionList = () => {
 
     return (
         <>
-
             <SafeAreaView style={styles.safeArea}>
-                          <Stack.Screen
-                options={{
-                    headerTitle: () => (
-                        <Text style={styles.questionCount}>
-                            全{displayInfo.questionCount}問
-                        </Text>
-                    ),
-                    headerLeft: () => (
-                        <TouchableOpacity
-                            onPress={() => router.back()}
-                            style={{ marginLeft: 8 }}
-                        >
-                            <ArrowLeft size={24} color={theme.colors.secondary[900]} />
-                        </TouchableOpacity>
-                    ),
-                }}
-            />
+                <Stack.Screen
+                    options={{
+                        headerTitle: () => (
+                            <Text style={styles.questionCount}>
+                                全{displayInfo.questionCount}問
+                            </Text>
+                        ),
+                        headerLeft: () => (
+                            <TouchableOpacity
+                                onPress={() => router.back()}
+                                style={{ marginLeft: 8 }}
+                            >
+                                <ArrowLeft size={24} color={theme.colors.secondary[900]} />
+                            </TouchableOpacity>
+                        ),
+                        gestureEnabled: false,
+                    }}
+                />
                 <ScrollView style={styles.container}>
-                <View>
-                    {Array.from({ length: displayInfo.questionCount }, (_, i) => i + 1).map((num) => {
-                        const questionData = getQuestionAnswers(chapterId, sectionId, num);
-                        const history = questionData?.attempts || [];
-                        const actualCount = history.length;
-                        const lastIsLocked = history[history.length - 1]?.resultConfirmFlg || false;
-                        const displayCount = lastIsLocked ? actualCount + 1 : actualCount;
+                    <View>
+                        {Array.from({ length: displayInfo.questionCount }, (_, i) => i + 1).map((num) => {
+                            const questionData = getQuestionAnswers(chapterId, sectionId, num);
+                            const history = questionData?.attempts || [];
+                            const actualCount = history.length;
+                            const lastIsLocked = history[history.length - 1]?.resultConfirmFlg || false;
+                            const displayCount = lastIsLocked ? actualCount + 1 : actualCount;
 
-                        const getCardWidth = () => {
-                            if (displayCount === 0) return undefined;
-                            if (displayCount === 1) return undefined;
-                            if (displayCount === 2) return '48%';
-                            if (displayCount === 3) return '31%';
-                            return 150;
-                        };
+                            const getCardWidth = () => {
+                                if (displayCount === 0) return undefined;
+                                if (displayCount === 1) return undefined;
+                                if (displayCount === 2) return '48%';
+                                if (displayCount === 3) return '31%';
+                                return 150;
+                            };
 
-                        const cardWidth = getCardWidth();
-                        const needsScroll = displayCount >= 4;
+                            const cardWidth = getCardWidth();
+                            const needsScroll = displayCount >= 4;
 
-                        return (
-                            <View key={num} style={styles.questionGroup}>
-                                <View style={styles.labelContainer}>
-                                    <Text style={styles.questionNumberLabel}>問題 {num}</Text>
-                                    <View style={styles.buttonGroup}>
-                                        <TouchableOpacity
-                                            style={styles.memoButton}
-                                            onPress={() => handleOpenMemo(num)}
-                                        >
-                                            <Text style={styles.memoText}>MEMO</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={styles.deleteButton}
-                                            onPress={() => handleDeleteQuestion(num)}
-                                        >
-                                            {/* @ts-ignore */}
-                                            <Trash2 size={16} color={theme.colors.error[600]} />
-                                        </TouchableOpacity>
+                            return (
+                                <View key={num} style={styles.questionGroup}>
+                                    <View style={styles.labelContainer}>
+                                        <Text style={styles.questionNumberLabel}>問題 {num}</Text>
+                                        <View style={styles.buttonGroup}>
+                                            <TouchableOpacity
+                                                style={styles.memoButton}
+                                                onPress={() => handleOpenMemo(num)}
+                                            >
+                                                <Text style={styles.memoText}>MEMO</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={styles.deleteButton}
+                                                onPress={() => handleDeleteQuestion(num)}
+                                            >
+                                                {/* @ts-ignore */}
+                                                <Trash2 size={16} color={theme.colors.error[600]} />
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
-                                </View>
 
-                                {
-                                    needsScroll ? (
-                                        <ScrollView
-                                            horizontal={true}
-                                            showsHorizontalScrollIndicator={false}
-                                            contentContainerStyle={styles.cardRow}
-                                        >
-                                            {history.map((attempt, attemptIndex) => {
-                                                const isLocked = attempt.resultConfirmFlg;
-                                                const isLastAttempt = attemptIndex === history.length - 1;
+                                    {
+                                        needsScroll ? (
+                                            <ScrollView
+                                                horizontal={true}
+                                                showsHorizontalScrollIndicator={false}
+                                                contentContainerStyle={styles.cardRow}
+                                            >
+                                                {history.map((attempt, attemptIndex) => {
+                                                    const isLocked = attempt.resultConfirmFlg;
+                                                    const isLastAttempt = attemptIndex === history.length - 1;
 
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={`${num}-${attemptIndex}`}
-                                                        style={[
-                                                            styles.questionCard,
-                                                            { width: 110 },
-                                                            attempt.result === '○' && styles.correctCard,
-                                                            attempt.result === '×' && styles.incorrectCard,
-                                                            isLocked && styles.lockedCard,
-                                                        ]}
-                                                        onPress={isLastAttempt ? () => handleDoubleTap(num) : undefined}
-                                                        onLongPress={isLastAttempt ? () => handleLongPress(num) : undefined}
-                                                        delayLongPress={500}
-                                                        disabled={!isLastAttempt}
-                                                    >
-                                                        {isLocked && <Text style={styles.lockIcon}>🔒</Text>}
-                                                        <Text style={styles.attemptNumber}>{attemptIndex + 1}周目</Text>
-                                                        <Text style={[
-                                                            styles.answerMark,
-                                                            attempt.result === '○' ? styles.correctMark : styles.incorrectMark
-                                                        ]}>
-                                                            {attempt.result}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                );
-                                            })}
-                                            {lastIsLocked && (
-                                                <TouchableOpacity
-                                                    style={[styles.questionCard, styles.unattemptedCard, { width: 110 }]}
-                                                    onPress={() => handleDoubleTap(num)}
-                                                >
-                                                    <Text style={styles.attemptNumber}>{actualCount + 1}周目</Text>
-                                                </TouchableOpacity>
-                                            )}
-                                        </ScrollView>
-                                    ) : (
-                                        <View style={styles.cardRowNonScroll}>
-                                            {history.length > 0 ? (
-                                                <>
-                                                    {history.map((attempt, attemptIndex) => {
-                                                        const isLocked = attempt.resultConfirmFlg;
-                                                        const isLastAttempt = attemptIndex === history.length - 1;
-
-                                                        return (
-                                                            <TouchableOpacity
-                                                                key={`${num}-${attemptIndex}`}
-                                                                style={[
-                                                                    styles.questionCard,
-                                                                    cardWidth ? { width: cardWidth } : { flex: 1 },
-                                                                    attempt.result === '○' && styles.correctCard,
-                                                                    attempt.result === '×' && styles.incorrectCard,
-                                                                    isLocked && styles.lockedCard,
-                                                                ]}
-                                                                onPress={isLastAttempt ? () => handleDoubleTap(num) : undefined}
-                                                                onLongPress={isLastAttempt ? () => handleLongPress(num) : undefined}
-                                                                delayLongPress={500}
-                                                                disabled={!isLastAttempt}
-                                                            >
-                                                                {isLocked && <Text style={styles.lockIcon}>🔒</Text>}
-                                                                <Text style={styles.attemptNumber}>{attemptIndex + 1}周目</Text>
-                                                                <Text style={[
-                                                                    styles.answerMark,
-                                                                    attempt.result === '○' ? styles.correctMark : styles.incorrectMark
-                                                                ]}>
-                                                                    {attempt.result}
-                                                                </Text>
-                                                            </TouchableOpacity>
-                                                        );
-                                                    })}
-
-                                                    {lastIsLocked && (
+                                                    return (
                                                         <TouchableOpacity
+                                                            key={`${num}-${attemptIndex}`}
                                                             style={[
                                                                 styles.questionCard,
-                                                                styles.unattemptedCard,
-                                                                cardWidth ? { width: cardWidth } : { flex: 1 }
+                                                                { width: 110 },
+                                                                attempt.result === '○' && styles.correctCard,
+                                                                attempt.result === '×' && styles.incorrectCard,
+                                                                isLocked && styles.lockedCard,
                                                             ]}
-                                                            onPress={() => handleDoubleTap(num)}
+                                                            onPress={isLastAttempt ? () => handleDoubleTap(num) : undefined}
+                                                            onLongPress={isLastAttempt ? () => handleLongPress(num) : undefined}
+                                                            delayLongPress={500}
+                                                            disabled={!isLastAttempt}
                                                         >
-                                                            <Text style={styles.attemptNumber}>{actualCount + 1}周目</Text>
+                                                            {isLocked && <Text style={styles.lockIcon}>🔒</Text>}
+                                                            <Text style={styles.attemptNumber}>{attemptIndex + 1}周目</Text>
+                                                            <Text style={[
+                                                                styles.answerMark,
+                                                                attempt.result === '○' ? styles.correctMark : styles.incorrectMark
+                                                            ]}>
+                                                                {attempt.result}
+                                                            </Text>
                                                         </TouchableOpacity>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <TouchableOpacity
-                                                    style={[styles.questionCard, styles.unattemptedCard, { flex: 1 }]}
-                                                    onPress={() => handleDoubleTap(num)}
-                                                >
-                                                    <Text style={styles.questionNumber}>{num}</Text>
-                                                </TouchableOpacity>
-                                            )}
-                                        </View>
-                                    )
-                                }
-                            </View>
-                        );
-                    })}
+                                                    );
+                                                })}
+                                                {lastIsLocked && (
+                                                    <TouchableOpacity
+                                                        style={[styles.questionCard, styles.unattemptedCard, { width: 110 }]}
+                                                        onPress={() => handleDoubleTap(num)}
+                                                    >
+                                                        <Text style={styles.attemptNumber}>{actualCount + 1}周目</Text>
+                                                    </TouchableOpacity>
+                                                )}
+                                            </ScrollView>
+                                        ) : (
+                                            <View style={styles.cardRowNonScroll}>
+                                                {history.length > 0 ? (
+                                                    <>
+                                                        {history.map((attempt, attemptIndex) => {
+                                                            const isLocked = attempt.resultConfirmFlg;
+                                                            const isLastAttempt = attemptIndex === history.length - 1;
 
-                    <TouchableOpacity
-                        style={styles.addQuestionButton}
-                        onPress={handleAddQuestion}
-                        activeOpacity={0.7}
-                    >
-                        {/* @ts-ignore */}
-                        <Plus size={24} color={theme.colors.primary[600]} strokeWidth={2.5} />
-                        <Text style={styles.addQuestionButtonText}>問題を追加</Text>
-                    </TouchableOpacity>
-                </View>
+                                                            return (
+                                                                <TouchableOpacity
+                                                                    key={`${num}-${attemptIndex}`}
+                                                                    style={[
+                                                                        styles.questionCard,
+                                                                        cardWidth ? { width: cardWidth } : { flex: 1 },
+                                                                        attempt.result === '○' && styles.correctCard,
+                                                                        attempt.result === '×' && styles.incorrectCard,
+                                                                        isLocked && styles.lockedCard,
+                                                                    ]}
+                                                                    onPress={isLastAttempt ? () => handleDoubleTap(num) : undefined}
+                                                                    onLongPress={isLastAttempt ? () => handleLongPress(num) : undefined}
+                                                                    delayLongPress={500}
+                                                                    disabled={!isLastAttempt}
+                                                                >
+                                                                    {isLocked && <Text style={styles.lockIcon}>🔒</Text>}
+                                                                    <Text style={styles.attemptNumber}>{attemptIndex + 1}周目</Text>
+                                                                    <Text style={[
+                                                                        styles.answerMark,
+                                                                        attempt.result === '○' ? styles.correctMark : styles.incorrectMark
+                                                                    ]}>
+                                                                        {attempt.result}
+                                                                    </Text>
+                                                                </TouchableOpacity>
+                                                            );
+                                                        })}
 
-                <MemoModal
-                    visible={modalVisible}
-                    questionNumber={selectedQuestion}
-                    memoText={memoText}
-                    onClose={() => setModalVisible(false)}
-                    onSave={handleSaveMemo}
-                    onChangeText={setMemoText}
-                />
+                                                        {lastIsLocked && (
+                                                            <TouchableOpacity
+                                                                style={[
+                                                                    styles.questionCard,
+                                                                    styles.unattemptedCard,
+                                                                    cardWidth ? { width: cardWidth } : { flex: 1 }
+                                                                ]}
+                                                                onPress={() => handleDoubleTap(num)}
+                                                            >
+                                                                <Text style={styles.attemptNumber}>{actualCount + 1}周目</Text>
+                                                            </TouchableOpacity>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <TouchableOpacity
+                                                        style={[styles.questionCard, styles.unattemptedCard, { flex: 1 }]}
+                                                        onPress={() => handleDoubleTap(num)}
+                                                    >
+                                                        <Text style={styles.questionNumber}>{num}</Text>
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                        )
+                                    }
+                                </View>
+                            );
+                        })}
 
-                <ConfirmDialog
-                    visible={deleteDialogVisible}
-                    title="問題を削除"
-                    message="この問題を削除してもよろしいですか？この操作は取り消せません。"
-                    onConfirm={confirmDelete}
-                    onCancel={() => setDeleteDialogVisible(false)}
-                />
+                        <TouchableOpacity
+                            style={styles.addQuestionButton}
+                            onPress={handleAddQuestion}
+                            activeOpacity={0.7}
+                        >
+                            {/* @ts-ignore */}
+                            <Plus size={24} color={theme.colors.primary[600]} strokeWidth={2.5} />
+                            <Text style={styles.addQuestionButtonText}>問題を追加</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <MemoModal
+                        visible={modalVisible}
+                        questionNumber={selectedQuestion}
+                        memoText={memoText}
+                        onClose={() => setModalVisible(false)}
+                        onSave={handleSaveMemo}
+                        onChangeText={setMemoText}
+                    />
+
+                    <ConfirmDialog
+                        visible={deleteDialogVisible}
+                        title="問題を削除"
+                        message="この問題を削除してもよろしいですか？この操作は取り消せません。"
+                        onConfirm={confirmDelete}
+                        onCancel={() => setDeleteDialogVisible(false)}
+                    />
                 </ScrollView>
 
                 <CustomTabBar />

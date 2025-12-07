@@ -16,7 +16,7 @@ export interface Chapter {
   id: string;
   title: string;
   chapterNumber: number;
-  chapterRate: number;  // ← 必須
+  chapterRate: number;
   sections?: Section[];
   questionCount?: number;
   questionAnswers?: QuestionAnswer[];

@@ -171,7 +171,7 @@ export default function DashboardScreen() {
         >
           <View style={styles.goalHeader}>
             <View style={styles.goalTitleContainer}>
-              <Target size={24} color={theme.colors.primary[600]} />
+              <Target size={20} color={theme.colors.neutral.white} />
               <Text style={styles.goalTitle}>目標</Text>
             </View>
             <Edit3 size={20} color={theme.colors.secondary[100]} />

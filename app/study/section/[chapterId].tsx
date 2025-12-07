@@ -1,10 +1,9 @@
-import ConfirmDialog from '@/app/compornents/ConfirmDialog';
 import EditDeleteModal from '@/app/compornents/EditDeleteModal';
-import Card from '@/components/ui/Card';
 import CustomTabBar from '@/components/CustomTabBar';
+import Card from '@/components/ui/Card';
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
-import { router, Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { AlertCircle, ArrowLeft, MoreVertical, Plus } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -112,36 +111,34 @@ const SectionList = () => {
     return (
       <>
         <SafeAreaView style={styles.wrapper}>
-                  <Stack.Screen
-          options={{
-            headerTitle: () => (
-              <View style={{ maxWidth: 280 }}>
-                <Text
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={{ fontSize: 16, fontWeight: "bold", textAlign: 'center' }}
-                >
-                  {book.title}
-                </Text>
+          <Stack.Screen
+            options={{
+              headerTitle: () => (
+                <View style={{ maxWidth: 280 }}>
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={{ fontSize: 16, fontWeight: "bold", textAlign: 'center' }}
+                  >
+                    {book.title}
+                  </Text>
 
-                <Text style={{ fontSize: 14, textAlign: 'center' }}>
-                  {`第${chapter.chapterNumber}章 ${chapter.title}`}
-                </Text>
-              </View>
-            ),
-            headerLeft: () => (
-              <TouchableOpacity
-                onPress={() => router.push({
-                  pathname: '/study/[id]',
-                  params: { id: book.id }
-                })}
-                style={{ marginLeft: 8 }}
-              >
-                <ArrowLeft size={24} color={theme.colors.secondary[900]} />
-              </TouchableOpacity>
-            ),
-          }}
-        />
+                  <Text style={{ fontSize: 14, textAlign: 'center' }}>
+                    {`第${chapter.chapterNumber}章 ${chapter.title}`}
+                  </Text>
+                </View>
+              ),
+              headerLeft: () => (
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{ marginLeft: 8 }}
+                >
+                  <ArrowLeft size={24} color={theme.colors.secondary[900]} />
+                </TouchableOpacity>
+              ),
+              gestureEnabled: false,
+            }}
+          />
           <View style={styles.selectionContainer}>
             <Text style={styles.selectionTitle}>節を使用しますか？</Text>
             <Text style={styles.selectionDescription}>
@@ -173,36 +170,34 @@ const SectionList = () => {
   return (
     <>
       <SafeAreaView style={styles.wrapper}>
-      <Stack.Screen
-        options={{
-          headerTitle: () => (
-            <View style={{ maxWidth: 280 }}>
-              <Text
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={{ fontSize: 16, fontWeight: "bold", textAlign: 'center' }}
-              >
-                {book.title}
-              </Text>
+        <Stack.Screen
+          options={{
+            headerTitle: () => (
+              <View style={{ maxWidth: 280 }}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={{ fontSize: 16, fontWeight: "bold", textAlign: 'center' }}
+                >
+                  {book.title}
+                </Text>
 
-              <Text style={{ fontSize: 14, textAlign: 'center' }}>
-                {`第${chapter.chapterNumber}章 ${chapter.title}`}
-              </Text>
-            </View>
-          ),
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.push({
-                pathname: '/study/[id]',
-                params: { id: book.id }
-              })}
-              style={{ marginLeft: 8 }}
-            >
-              <ArrowLeft size={24} color={theme.colors.secondary[900]} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+                <Text style={{ fontSize: 14, textAlign: 'center' }}>
+                  {`第${chapter.chapterNumber}章 ${chapter.title}`}
+                </Text>
+              </View>
+            ),
+            headerLeft: () => (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{ marginLeft: 8 }}
+              >
+                <ArrowLeft size={24} color={theme.colors.secondary[900]} />
+              </TouchableOpacity>
+            ),
+            gestureEnabled: false,
+          }}
+        />
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.scrollContent}

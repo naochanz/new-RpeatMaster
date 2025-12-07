@@ -1,9 +1,9 @@
 import { theme } from '@/constants/theme';
 import { useQuizBookStore } from '@/stores/quizBookStore';
 import { router } from 'expo-router';
-import { AlertCircle, Plus } from 'lucide-react-native';
+import { AlertCircle, Edit, MoreVertical, Plus, Trash2 } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AddItemModal from '../compornents/AddItemModal';
 import CategorySelectModal from '../compornents/CategorySelectModal';
 import ConfirmDialog from '../compornents/ConfirmDialog';
@@ -14,6 +14,8 @@ export default function LibraryScreen() {
   const quizBooks = useQuizBookStore(state => state.quizBooks);
   const addQuizBook = useQuizBookStore(state => state.addQuizBook);
   const deleteQuizBook = useQuizBookStore(state => state.deleteQuizBook);
+  const updateQuizBook = useQuizBookStore(state => state.updateQuizBook);
+
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [addItemModalVisible, setAddItemModalVisible] = useState(false);
@@ -21,6 +23,12 @@ export default function LibraryScreen() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [titleModalVisible, setTitleModalVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editedCategoryName, setEditedCategoryName] = useState('');
+  const [targetCategory, setTargetCategory] = useState<string>('');
+  const [deleteCategoryDialogVisible, setDeleteCategoryDialogVisible] = useState(false);
 
   const groupedQuizBooks = useMemo(() => {
     const groups: { [key: string]: any[] } = {};
@@ -106,7 +114,7 @@ export default function LibraryScreen() {
   };
 
   const handleCardPress = (quizBookId: string) => {
-    router.push(`/study/${quizBookId}` as any);
+    router.navigate(`/study/${quizBookId}` as any);
   };
 
   const handleDelete = async (quizBookId: string) => {
@@ -120,6 +128,45 @@ export default function LibraryScreen() {
       setDeleteDialogVisible(false);
       setDeleteTargetId(null);
     }
+  };
+
+  const handleCategoryMenuPress = (category: string) => {
+    setTargetCategory(category);
+    setShowCategoryMenu(true);
+  };
+
+  const handleEditCategory = () => {
+    setShowCategoryMenu(false);
+    setEditedCategoryName(targetCategory);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteCategory = () => {
+    setShowCategoryMenu(false);
+    setDeleteCategoryDialogVisible(true);
+  };
+
+  const confirmEditCategory = async () => {
+    if (editedCategoryName.trim() === '' || editedCategoryName === targetCategory) {
+      setShowEditModal(false);
+      return;
+    }
+
+    const categoryBooks = quizBooks.filter(book => book.category === targetCategory);
+    for (const book of categoryBooks) {
+      await updateQuizBook(book.id, { category: editedCategoryName.trim() });
+    }
+    setShowEditModal(false);
+    setTargetCategory('');
+  };
+
+  const confirmDeleteCategory = async () => {
+    const categoryBooks = quizBooks.filter(book => book.category === targetCategory);
+    for (const book of categoryBooks) {
+      await deleteQuizBook(book.id);
+    }
+    setDeleteCategoryDialogVisible(false);
+    setTargetCategory('');
   };
 
   return (
@@ -136,14 +183,26 @@ export default function LibraryScreen() {
         {quizBooks.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyContent}>
-              <AlertCircle size={20} color={theme.colors.warning[600] as string} />
+              {/* @ts-ignore */}
+              <AlertCircle size={20} color={theme.colors.warning[600]} />
               <Text style={styles.emptyText}>まだ問題集が登録されていません</Text>
             </View>
           </View>
         ) : (
           Object.entries(groupedQuizBooks).map(([category, books]) => (
             <View key={category} style={styles.categorySection}>
-              <Text style={styles.categoryTitle}>{category}</Text>
+              <View style={styles.categoryHeader}>
+                <Text style={styles.categoryTitle}>{category}</Text>
+                <TouchableOpacity
+                  onPress={() => handleCategoryMenuPress(category)}
+                  activeOpacity={0.7}
+                  style={styles.categoryMenuButton}
+                >
+                  {/* @ts-ignore */}
+                  <MoreVertical size={20} color={theme.colors.secondary[600]} />
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.cardsGrid}>
                 {books.map((book) => (
                   <View key={book.id} style={styles.cardWrapper}>
@@ -166,7 +225,8 @@ export default function LibraryScreen() {
         onPress={handleAddQuiz}
         activeOpacity={0.8}
       >
-        <Plus size={28} color={theme.colors.neutral.white as string} strokeWidth={2.5} />
+        {/* @ts-ignore */}
+        <Plus size={28} color={theme.colors.neutral.white} strokeWidth={2.5} />
       </TouchableOpacity>
 
       <AddItemModal
@@ -200,6 +260,71 @@ export default function LibraryScreen() {
         onConfirm={confirmDelete}
         onCancel={() => setDeleteDialogVisible(false)}
       />
+
+      <Modal
+        visible={showCategoryMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryMenu(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowCategoryMenu(false)}>
+          <View style={styles.menuContent}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleEditCategory}>
+              {/* @ts-ignore */}
+              <Edit size={20} color={theme.colors.primary[600]} />
+              <Text style={styles.menuText}>編集</Text>
+            </TouchableOpacity>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteCategory}>
+              {/* @ts-ignore */}
+              <Trash2 size={20} color={theme.colors.error[600]} />
+              <Text style={[styles.menuText, { color: theme.colors.error[600] }]}>削除</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.editModalContent}>
+            <Text style={styles.editModalTitle}>資格名を編集</Text>
+            <TextInput
+              style={styles.editInput}
+              value={editedCategoryName}
+              onChangeText={setEditedCategoryName}
+              placeholder="資格名を入力"
+              placeholderTextColor={theme.colors.secondary[400]}
+            />
+            <View style={styles.editModalActions}>
+              <TouchableOpacity
+                style={[styles.editModalButton, styles.cancelButton]}
+                onPress={() => setShowEditModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.editModalButton, styles.confirmButton]}
+                onPress={confirmEditCategory}
+              >
+                <Text style={styles.confirmButtonText}>保存</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <ConfirmDialog
+        visible={deleteCategoryDialogVisible}
+        title="資格グループを削除"
+        message={`「${targetCategory}」の資格グループとその中の全ての問題集を削除してもよろしいですか？この操作は取り消せません。`}
+        onConfirm={confirmDeleteCategory}
+        onCancel={() => setDeleteCategoryDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -232,15 +357,23 @@ const styles = StyleSheet.create({
   categorySection: {
     marginBottom: theme.spacing.xl,
   },
+  categoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.primary[400],
+  },
   categoryTitle: {
     fontSize: theme.typography.fontSizes.lg,
     fontWeight: theme.typography.fontWeights.bold as any,
     fontFamily: 'ZenKaku-Bold',
     color: theme.colors.secondary[900],
-    marginBottom: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.primary[400],
+  },
+  categoryMenuButton: {
+    padding: theme.spacing.xs,
   },
   cardsGrid: {
     flexDirection: 'row',
@@ -279,5 +412,87 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...theme.shadows.lg,
     elevation: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  menuContent: {
+    backgroundColor: theme.colors.neutral.white,
+    borderRadius: theme.borderRadius.lg,
+    minWidth: 200,
+    ...theme.shadows.xl,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: theme.colors.secondary[200],
+    marginHorizontal: theme.spacing.md,
+  },
+  menuText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Medium',
+    color: theme.colors.secondary[900],
+  },
+  editModalContent: {
+    backgroundColor: theme.colors.neutral.white,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+    minWidth: 300,
+    ...theme.shadows.xl,
+  },
+  editModalTitle: {
+    fontSize: theme.typography.fontSizes.lg,
+    fontWeight: theme.typography.fontWeights.bold as any,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.secondary[900],
+    marginBottom: theme.spacing.lg,
+    textAlign: 'center',
+  },
+  editInput: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Regular',
+    color: theme.colors.secondary[900],
+    borderWidth: 1,
+    borderColor: theme.colors.secondary[300],
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.neutral.white,
+    marginBottom: theme.spacing.lg,
+  },
+  editModalActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  editModalButton: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: theme.colors.secondary[100],
+  },
+  cancelButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.secondary[700],
+  },
+  confirmButton: {
+    backgroundColor: theme.colors.primary[600],
+  },
+  confirmButtonText: {
+    fontSize: theme.typography.fontSizes.base,
+    fontFamily: 'ZenKaku-Bold',
+    color: theme.colors.neutral.white,
   },
 });
