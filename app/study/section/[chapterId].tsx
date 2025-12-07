@@ -194,7 +194,9 @@ const SectionList = () => {
   // 節を使用する場合
   return (
     <>
-      <Stack.Screen
+
+      <SafeAreaView style={styles.wrapper}>
+              <Stack.Screen
         options={{
           headerTitle: () => (
             <View style={{ maxWidth: 280 }}>
@@ -232,7 +234,6 @@ const SectionList = () => {
 
 
 
-      <SafeAreaView style={styles.wrapper}>
         <ScrollView
           style={styles.container}
           contentContainerStyle={styles.scrollContent}
