@@ -196,7 +196,7 @@ const SectionList = () => {
     <>
 
       <SafeAreaView style={styles.wrapper}>
-              <Stack.Screen
+      <Stack.Screen
         options={{
           headerTitle: () => (
             <View style={{ maxWidth: 280 }}>
