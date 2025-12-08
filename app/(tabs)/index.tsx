@@ -90,6 +90,14 @@ export default function DashboardScreen() {
     return Object.values(statsMap).sort((a, b) => b.avgCorrectRate - a.avgCorrectRate);
   }, [quizBooks]);
 
+  // ✅ qualificationStats が変わった時に自動で開く
+  useEffect(() => {
+    if (qualificationStats.length === 1) {
+      // 資格が1つしかない場合は自動で開く
+      setExpandedCategories(new Set([qualificationStats[0].category]));
+    }
+  }, [qualificationStats]);
+
   const handleQualificationPress = (category: string) => {
     router.push({
       pathname: '/dashboard/qualification/[category]' as any,
@@ -98,15 +106,18 @@ export default function DashboardScreen() {
   };
 
   const toggleCategoryExpanded = (category: string) => {
-    setExpandedCategories(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(category)) {
-        newSet.delete(category);
-      } else {
-        newSet.add(category);
-      }
-      return newSet;
-    });
+    // ✅ 資格が2つ以上の場合のみトグル可能
+    if (qualificationStats.length > 1) {
+      setExpandedCategories(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(category)) {
+          newSet.delete(category);
+        } else {
+          newSet.add(category);
+        }
+        return newSet;
+      });
+    }
   };
 
   const handleNavigateToLibrary = () => {
@@ -199,7 +210,9 @@ export default function DashboardScreen() {
         ) : (
           <View style={styles.qualificationList}>
             {qualificationStats.map((qual) => {
-              const isExpanded = expandedCategories.has(qual.category);
+              // ✅ 資格が1つの場合は常に展開、2つ以上の場合はトグル状態を見る
+              const isExpanded = qualificationStats.length === 1 || expandedCategories.has(qual.category);
+
               return (
                 <View key={qual.category} style={styles.qualificationCard}>
                   <TouchableOpacity
@@ -214,10 +227,13 @@ export default function DashboardScreen() {
                         <Text style={styles.bookCountText}>{qual.totalBooks}</Text>
                       </View>
                     </View>
-                    {isExpanded ? (
-                      <ChevronUp size={24} color={theme.colors.secondary[600]} />
-                    ) : (
-                      <ChevronDown size={24} color={theme.colors.secondary[600]} />
+                    {/* ✅ 資格が2つ以上の場合のみシェブロンアイコン表示 */}
+                    {qualificationStats.length > 1 && (
+                      isExpanded ? (
+                        <ChevronUp size={24} color={theme.colors.secondary[600]} />
+                      ) : (
+                        <ChevronDown size={24} color={theme.colors.secondary[600]} />
+                      )
                     )}
                   </TouchableOpacity>
 
@@ -288,6 +304,8 @@ export default function DashboardScreen() {
     </SafeAreaView>
   );
 }
+
+// styles は同じなので省略
 
 const styles = StyleSheet.create({
   container: {

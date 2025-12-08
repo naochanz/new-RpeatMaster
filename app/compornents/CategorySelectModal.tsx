@@ -1,5 +1,5 @@
 import { theme } from '@/constants/theme';
-import { X, Plus } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -11,11 +11,15 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 
 interface CategorySelectModalProps {
   visible: boolean;
   categories: string[];
+  mode: 'select' | 'create';
+  registeredCategories?: string[];
   onSelect: (category: string) => void;
   onClose: () => void;
 }
@@ -23,6 +27,8 @@ interface CategorySelectModalProps {
 const CategorySelectModal = ({
   visible,
   categories,
+  mode,
+  registeredCategories = [],
   onSelect,
   onClose,
 }: CategorySelectModalProps) => {
@@ -56,70 +62,107 @@ const CategorySelectModal = ({
       animationType="fade"
       onRequestClose={handleClose}
     >
-      <SafeAreaView style={styles.modalOverlay}>
-        <Pressable style={styles.modalOverlayPressable} onPress={handleClose}>
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>資格を選択</Text>
-              <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <X size={24} color={theme.colors.secondary[600]} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category}
-                  style={styles.categoryItem}
-                  onPress={() => handleSelectCategory(category)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.categoryText}>{category}</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={styles.modalOverlay}>
+          <Pressable style={styles.modalOverlayPressable} onPress={handleClose}>
+            <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {mode === 'create' || isAddingNew ? '新しい資格を追加' : '資格を選択'}
+                </Text>
+                <TouchableOpacity onPress={handleClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <X size={24} color={theme.colors.secondary[600]} />
                 </TouchableOpacity>
-              ))}
+              </View>
 
-              {isAddingNew ? (
-                <View style={styles.newCategoryContainer}>
-                  <TextInput
-                    style={styles.newCategoryInput}
-                    value={newCategory}
-                    onChangeText={setNewCategory}
-                    placeholder="新しい資格名を入力"
-                    placeholderTextColor={theme.colors.secondary[400]}
-                    onSubmitEditing={handleAddNewCategory}
-                  />
-                  <View style={styles.newCategoryActions}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.cancelButton]}
-                      onPress={() => {
-                        setIsAddingNew(false);
-                        setNewCategory('');
-                      }}
-                    >
-                      <Text style={styles.cancelButtonText}>キャンセル</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.addButton]}
-                      onPress={handleAddNewCategory}
-                    >
-                      <Text style={styles.addButtonText}>追加</Text>
-                    </TouchableOpacity>
+              {mode === 'create' ? (
+                <View style={styles.modalBody}>
+                  <View style={styles.newCategoryContainer}>
+                    <TextInput
+                      style={styles.newCategoryInput}
+                      value={newCategory}
+                      onChangeText={setNewCategory}
+                      placeholder="新しい資格名を入力"
+                      placeholderTextColor={theme.colors.secondary[400]}
+                      onSubmitEditing={handleAddNewCategory}
+                      autoFocus
+                    />
+                    <View style={styles.newCategoryActions}>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.cancelButton]}
+                        onPress={handleClose}
+                      >
+                        <Text style={styles.cancelButtonText}>キャンセル</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.addButton]}
+                        onPress={handleAddNewCategory}
+                      >
+                        <Text style={styles.addButtonText}>追加</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               ) : (
-                <TouchableOpacity
-                  style={styles.addNewButton}
-                  onPress={() => setIsAddingNew(true)}
-                  activeOpacity={0.7}
-                >
-                  <Plus size={20} color={theme.colors.primary[600]} />
-                  <Text style={styles.addNewText}>新しい資格を追加</Text>
-                </TouchableOpacity>
+                <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+                  {/* ✅ mode='select' の時は全ての資格を表示（登録済みも含む） */}
+                  {categories.map((category) => (
+                    <TouchableOpacity
+                      key={category}
+                      style={styles.categoryItem}
+                      onPress={() => handleSelectCategory(category)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.categoryText}>{category}</Text>
+                    </TouchableOpacity>
+                  ))}
+
+                  {isAddingNew ? (
+                    <View style={styles.newCategoryContainer}>
+                      <TextInput
+                        style={styles.newCategoryInput}
+                        value={newCategory}
+                        onChangeText={setNewCategory}
+                        placeholder="新しい資格名を入力"
+                        placeholderTextColor={theme.colors.secondary[400]}
+                        onSubmitEditing={handleAddNewCategory}
+                        autoFocus
+                      />
+                      <View style={styles.newCategoryActions}>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.cancelButton]}
+                          onPress={() => {
+                            setIsAddingNew(false);
+                            setNewCategory('');
+                          }}
+                        >
+                          <Text style={styles.cancelButtonText}>キャンセル</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.addButton]}
+                          onPress={handleAddNewCategory}
+                        >
+                          <Text style={styles.addButtonText}>追加</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => setIsAddingNew(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.addNewCategoryLink}>+ 新しい資格を追加</Text>
+                    </TouchableOpacity>
+                  )}
+                </ScrollView>
               )}
-            </ScrollView>
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </SafeAreaView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -139,7 +182,7 @@ const styles = StyleSheet.create({
     maxHeight: '70%',
     backgroundColor: theme.colors.neutral.white,
     borderRadius: theme.borderRadius.xl,
-    ...theme.shadows.xl,
+    ...theme.shadows.lg,
     overflow: 'hidden',
   },
   modalHeader: {
@@ -173,25 +216,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.base,
     fontFamily: 'ZenKaku-Medium',
     color: theme.colors.secondary[900],
-  },
-  addNewButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
-    backgroundColor: theme.colors.primary[50],
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 2,
-    borderColor: theme.colors.primary[300],
-    borderStyle: 'dashed',
-    marginTop: theme.spacing.md,
-    gap: theme.spacing.sm,
-  },
-  addNewText: {
-    fontSize: theme.typography.fontSizes.base,
-    fontFamily: 'ZenKaku-Medium',
-    color: theme.colors.primary[600],
   },
   newCategoryContainer: {
     marginTop: theme.spacing.md,
@@ -237,6 +261,14 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSizes.sm,
     fontFamily: 'ZenKaku-Bold',
     color: theme.colors.neutral.white,
+  },
+  addNewCategoryLink: {
+    fontSize: theme.typography.fontSizes.base,
+    color: theme.colors.primary[600],
+    fontFamily: 'ZenKaku-Bold',
+    textDecorationLine: 'underline',
+    textAlign: 'center',
+    paddingVertical: theme.spacing.md,
   },
 });
 

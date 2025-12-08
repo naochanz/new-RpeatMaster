@@ -125,10 +125,9 @@ const StudyHome = () => {
                     ),
                     headerLeft: () => (
                         <TouchableOpacity
-                            onPress={() => router.back()}
+                            onPress={() => router.navigate('/(tabs)/library')}
                             style={{ marginLeft: 8 }}
                         >
-                            {/* @ts-ignore */}
                             <ArrowLeft size={24} color={theme.colors.secondary[900]} />
                         </TouchableOpacity>
                     ),

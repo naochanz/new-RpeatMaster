@@ -29,6 +29,10 @@ export default function LibraryScreen() {
   const [editedCategoryName, setEditedCategoryName] = useState('');
   const [targetCategory, setTargetCategory] = useState<string>('');
   const [deleteCategoryDialogVisible, setDeleteCategoryDialogVisible] = useState(false);
+  
+  const registeredCategories = useMemo(() => {
+    return [...new Set(quizBooks.map(book => book.category))];
+  }, [quizBooks]);
 
   const groupedQuizBooks = useMemo(() => {
     const groups: { [key: string]: any[] } = {};
@@ -240,6 +244,8 @@ export default function LibraryScreen() {
         visible={categoryModalVisible}
         categories={existingCategories}
         onSelect={handleCategorySelect}
+        mode={isAddingCategory ? 'create' : 'select'}
+        registeredCategories={registeredCategories}
         onClose={() => {
           setCategoryModalVisible(false);
           setIsAddingCategory(false);
